@@ -86,6 +86,8 @@ body{
 .hbtn{margin-left:auto;padding:5px 12px;font-size:12px;background:var(--sur);border:none;border-radius:8px;color:var(--tx2);cursor:pointer;font-family:inherit}
 .hbtn:hover{color:var(--tx);background:var(--sur2)}
 .hbtn:disabled{opacity:.35;cursor:default}
+@keyframes genPulse{0%,100%{opacity:.35}50%{opacity:1}}
+.gen-loading{animation:genPulse 1.2s ease-in-out infinite;font-size:12px;color:var(--tx2);text-align:center;flex:1;padding:4px 0}
 .fprog{display:flex;gap:5px;padding:0 14px 5px;flex-shrink:0;width:100%}
 .fpip{flex:1;height:4px;border-radius:2px;background:var(--sur2);transition:background .25s}
 .fpip.active{background:var(--acc)}
@@ -396,18 +398,29 @@ function shuf(a){
 }
 
 function solveSudoku(grid,N){
+  // MRV (Minimum Remaining Values): always pick the empty cell with the
+  // fewest valid choices. This dramatically reduces backtracking for
+  // constrained faces (especially Back face with all 4 edges set).
   const {r:br,c:bc}=BX[N],g=[...grid];
-  const ok=(i,v)=>{
+  const getValid=(i)=>{
     const r=(i/N)|0,c=i%N;
-    for(let k=0;k<N;k++) if(g[r*N+k]===v||g[k*N+c]===v) return false;
+    let mask=0;
+    for(let k=0;k<N;k++){mask|=(1<<g[r*N+k]);mask|=(1<<g[k*N+c]);}
     const r0=((r/br)|0)*br,c0=((c/bc)|0)*bc;
-    for(let dr=0;dr<br;dr++) for(let dc=0;dc<bc;dc++) if(g[(r0+dr)*N+(c0+dc)]===v) return false;
-    return true;
+    for(let dr=0;dr<br;dr++) for(let dc=0;dc<bc;dc++) mask|=(1<<g[(r0+dr)*N+(c0+dc)]);
+    const v=[];for(let n=1;n<=N;n++) if(!(mask&(1<<n))) v.push(n);
+    return v;
   };
   const go=()=>{
-    const i=g.indexOf(0); if(i<0) return true;
-    for(const v of shuf([...Array(N).keys()].map(x=>x+1)))
-      if(ok(i,v)){g[i]=v;if(go())return true;g[i]=0;}
+    let minLen=N+1,minCell=-1,minValid=null;
+    for(let i=0;i<N*N;i++){
+      if(g[i]) continue;
+      const v=getValid(i);
+      if(v.length===0) return false; // dead end — backtrack immediately
+      if(v.length<minLen){minLen=v.length;minCell=i;minValid=v;if(minLen===1)break;}
+    }
+    if(minCell===-1) return true; // all cells filled
+    for(const v of shuf(minValid)){g[minCell]=v;if(go())return true;g[minCell]=0;}
     return false;
   };
   return go()?g:null;
@@ -460,7 +473,7 @@ async function genCube(N){
   const yield_=()=>new Promise(r=>setTimeout(r,0));
   while(true){
     for(let attempt=0;attempt<MAX;attempt++){
-      if(attempt%10===0)await yield_();
+      if(attempt%10===0||N===9)await yield_();
       const s=Array(6).fill(null);
       s[1]=solveSudoku(Array(N*N).fill(0),N);if(!s[1])continue;
       // Top: top(FRONT edge)==Front.top
@@ -552,9 +565,6 @@ function getLinkedEdgeCell(face,i,N){
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
     el.classList.toggle('factive',i===G.f);
-    // `inert` blocks ALL pointer events on the element AND every descendant cell —
-    // unlike pointer-events:none (which doesn't cascade to children in HTML).
-    el.inert=(i!==G.f);
   });
 }
 
@@ -609,7 +619,7 @@ async function startGame(key){
   lit=null;busy=true;++swipeToken; // busy=true blocks input while generating
   // Show a loading indicator while the puzzle is being generated
   const fprog=document.getElementById('fprog');
-  fprog.innerHTML='<div style="flex:1;text-align:center;font-size:12px;color:var(--tx2);padding:4px 0">Generating puzzle…</div>';
+  fprog.innerHTML='<div class="gen-loading">Generating puzzle…</div>';
   document.getElementById('hintbtn').disabled=true;
   await new Promise(r=>setTimeout(r,0)); // let the browser paint before blocking
   G.faces=mkFaces(mode.N,await genCube(mode.N),mode.givens);
@@ -633,7 +643,7 @@ async function enterInner(){
   document.getElementById('wb').style.display='none';
   document.getElementById('hintbtn').disabled=true;
   const fprog=document.getElementById('fprog');
-  fprog.innerHTML='<div style="flex:1;text-align:center;font-size:12px;color:var(--tx2);padding:4px 0">Generating inner shell…</div>';
+  fprog.innerHTML='<div class="gen-loading">Generating inner shell…</div>';
   G.ifaces=mkFaces(G.N,await genCube(G.N),G.innerGivens);
   document.getElementById('hintbtn').disabled=false;
   renderAll();updateActiveFaceUI();
@@ -687,7 +697,10 @@ function renderFace(fi,active){
     cell.className='cell';
     const row=(i/N)|0,col=i%N;
     const bR=(row/br)|0,bC=(col/bc)|0;
-    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)}`;
+    // pointer-events:none on cells of inactive faces is the most reliable
+    // cross-browser fix for 3D-transformed face hit-testing.
+    const pe=active?'':'none';
+    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)};pointer-events:${pe}`;
     if(row>0&&row%br===0) cell.classList.add('bbt');
     if(col>0&&col%bc===0) cell.classList.add('bbl');
 
@@ -711,15 +724,11 @@ function renderFace(fi,active){
           if(sr===row||sc===col||sameBox) cell.classList.add('hl');
         }
       }
-      // Every non-given cell gets a click handler.
-      // At click time, ask the cube geometry directly — facingFace(cubeM) is
-      // always ground truth, so the right face always works regardless of what
-      // G.f was when cells were last rendered.
+      // Cell-level pointer-events:none (set above) is the primary guard.
+      // G.f check here is a belt-and-suspenders fallback.
       const idx=i,faceIdx=fi;
       cell.addEventListener('click',()=>{
-        if(busy)return;
-        if(facingFace(cubeM)!==faceIdx)return; // not the active face
-        G.f=faceIdx; // sync G.f to geometry
+        if(busy||G.f!==faceIdx)return;
         if(lit!==null){G.sel=idx;enterNum(lit);return;}
         G.sel=(G.sel===idx)?null:idx;
         renderFace(G.f,true);
