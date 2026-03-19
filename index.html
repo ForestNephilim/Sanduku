@@ -85,6 +85,7 @@ body{
 .spip.inner{background:rgba(167,139,250,.15);color:#a78bfa}
 .hbtn{margin-left:auto;padding:5px 12px;font-size:12px;background:var(--sur);border:none;border-radius:8px;color:var(--tx2);cursor:pointer;font-family:inherit}
 .hbtn:hover{color:var(--tx);background:var(--sur2)}
+.hbtn:disabled{opacity:.35;cursor:default}
 .fprog{display:flex;gap:5px;padding:0 14px 5px;flex-shrink:0;width:100%}
 .fpip{flex:1;height:4px;border-radius:2px;background:var(--sur2);transition:background .25s}
 .fpip.active{background:var(--acc)}
@@ -114,7 +115,6 @@ body{
   border-radius:10px;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5);
-  pointer-events:none; /* only the active face gets pointer-events:auto */
 }
 [data-f="0"]{transform:rotateX(-90deg) translateZ(var(--H))} /* Top    */
 [data-f="1"]{transform:translateZ(var(--H))}                  /* Front  */
@@ -452,43 +452,47 @@ function edgesOK(s,N){
   );
 }
 
-function genCube(N){
+async function genCube(N){
+  // Async: yields the UI thread every 10 attempts so the browser stays
+  // responsive. Outer while-loop replaces old tail-recursion (which
+  // could stack-overflow if many restarts were needed).
   const MAX=N===9?600:120;
-  for(let attempt=0;attempt<MAX;attempt++){
-    const s=Array(6).fill(null);
-    s[1]=solveSudoku(Array(N*N).fill(0),N);if(!s[1])continue;
-    // Top: top(FRONT edge)==Front.top
-    {const g=Array(N*N).fill(0);setE(g,N,'top',getE(s[1],N,'top'));
-     s[0]=solveSudoku(g,N);if(!s[0])continue;}
-    // Right: left==Front.right, top==Top.right (no rev — both go front→back)
-    {const g=Array(N*N).fill(0);
-     setE(g,N,'left',getE(s[1],N,'right'));
-     setE(g,N,'top',getE(s[0],N,'right'));
-     if(hasConflict(g,N))continue;s[2]=solveSudoku(g,N);if(!s[2])continue;}
-    // Left: right==Front.left, top==rev(Top.left) (opposite directions)
-    {const g=Array(N*N).fill(0);
-     setE(g,N,'right',getE(s[1],N,'left'));
-     setE(g,N,'top',rev(getE(s[0],N,'left')));
-     if(hasConflict(g,N))continue;s[4]=solveSudoku(g,N);if(!s[4])continue;}
-    // Bottom: bottom(FRONT edge)==Front.bottom, right==rev(Right.bottom), left==Left.bottom
-    {const g=Array(N*N).fill(0);
-     setE(g,N,'bottom',getE(s[1],N,'bottom'));
-     setE(g,N,'right',rev(getE(s[2],N,'bottom')));
-     setE(g,N,'left',getE(s[4],N,'bottom'));
-     if(hasConflict(g,N))continue;s[5]=solveSudoku(g,N);if(!s[5])continue;}
-    // Back: all 4 edges constrained
-    {const g=Array(N*N).fill(0);
-     setE(g,N,'top',  rev(getE(s[0],N,'bottom')));
-     setE(g,N,'left', getE(s[2],N,'right'));
-     setE(g,N,'right',getE(s[4],N,'left'));
-     setE(g,N,'bottom',rev(getE(s[5],N,'top')));
-     if(hasConflict(g,N))continue;s[3]=solveSudoku(g,N);if(!s[3])continue;}
-    // Verify all edges actually match before returning
-    if(edgesOK(s,N)) return s;
+  const yield_=()=>new Promise(r=>setTimeout(r,0));
+  while(true){
+    for(let attempt=0;attempt<MAX;attempt++){
+      if(attempt%10===0)await yield_();
+      const s=Array(6).fill(null);
+      s[1]=solveSudoku(Array(N*N).fill(0),N);if(!s[1])continue;
+      // Top: top(FRONT edge)==Front.top
+      {const g=Array(N*N).fill(0);setE(g,N,'top',getE(s[1],N,'top'));
+       s[0]=solveSudoku(g,N);if(!s[0])continue;}
+      // Right: left==Front.right, top==Top.right (no rev)
+      {const g=Array(N*N).fill(0);
+       setE(g,N,'left',getE(s[1],N,'right'));
+       setE(g,N,'top',getE(s[0],N,'right'));
+       if(hasConflict(g,N))continue;s[2]=solveSudoku(g,N);if(!s[2])continue;}
+      // Left: right==Front.left, top==rev(Top.left)
+      {const g=Array(N*N).fill(0);
+       setE(g,N,'right',getE(s[1],N,'left'));
+       setE(g,N,'top',rev(getE(s[0],N,'left')));
+       if(hasConflict(g,N))continue;s[4]=solveSudoku(g,N);if(!s[4])continue;}
+      // Bottom
+      {const g=Array(N*N).fill(0);
+       setE(g,N,'bottom',getE(s[1],N,'bottom'));
+       setE(g,N,'right',rev(getE(s[2],N,'bottom')));
+       setE(g,N,'left',getE(s[4],N,'bottom'));
+       if(hasConflict(g,N))continue;s[5]=solveSudoku(g,N);if(!s[5])continue;}
+      // Back: all 4 edges constrained
+      {const g=Array(N*N).fill(0);
+       setE(g,N,'top',  rev(getE(s[0],N,'bottom')));
+       setE(g,N,'left', getE(s[2],N,'right'));
+       setE(g,N,'right',getE(s[4],N,'left'));
+       setE(g,N,'bottom',rev(getE(s[5],N,'top')));
+       if(hasConflict(g,N))continue;s[3]=solveSudoku(g,N);if(!s[3])continue;}
+      if(edgesOK(s,N)) return s;
+    }
+    console.warn('genCube: exhausted '+MAX+' attempts, restarting');
   }
-  // Extremely unlikely to reach here — log and loop rather than recurse
-  console.warn('genCube: exhausted attempts, restarting (rare)');
-  return genCube(N);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -548,7 +552,9 @@ function getLinkedEdgeCell(face,i,N){
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
     el.classList.toggle('factive',i===G.f);
-    el.style.pointerEvents=(i===G.f)?'auto':'none';
+    // `inert` blocks ALL pointer events on the element AND every descendant cell —
+    // unlike pointer-events:none (which doesn't cascade to children in HTML).
+    el.inert=(i!==G.f);
   });
 }
 
@@ -590,7 +596,7 @@ const MODES={
 let G={};
 let busy=false,lit=null,swipeToken=0;
 
-function startGame(key){
+async function startGame(key){
   const mode=MODES[key];
   document.getElementById('menu').classList.add('gone');
   document.getElementById('game').classList.add('show');
@@ -600,31 +606,39 @@ function startGame(key){
   document.getElementById('spip').textContent='Outer shell';
   document.getElementById('spip').className='spip';
   document.getElementById('wb').style.display='none';
-  lit=null;busy=false;++swipeToken;
-  setTimeout(()=>{
-    G.faces=mkFaces(mode.N,genCube(mode.N),mode.givens);
-    renderAll();
-    updateFaceRots();
-    updateActiveFaceUI();
-  },0);
+  lit=null;busy=true;++swipeToken; // busy=true blocks input while generating
+  // Show a loading indicator while the puzzle is being generated
+  const fprog=document.getElementById('fprog');
+  fprog.innerHTML='<div style="flex:1;text-align:center;font-size:12px;color:var(--tx2);padding:4px 0">Generating puzzle…</div>';
+  document.getElementById('hintbtn').disabled=true;
+  await new Promise(r=>setTimeout(r,0)); // let the browser paint before blocking
+  G.faces=mkFaces(mode.N,await genCube(mode.N),mode.givens);
+  busy=false;
+  document.getElementById('hintbtn').disabled=false;
+  renderAll();
+  updateFaceRots();
+  updateActiveFaceUI();
 }
 
-function enterInner(){
+async function enterInner(){
   // Fade out, rebuild, fade back in — never touch the matrix3d transform
   const cubeEl2=document.getElementById('cube');
   cubeEl2.style.transition='opacity 0.35s ease';
   cubeEl2.style.opacity='0';
-  setTimeout(()=>{
-    G.shell='inner';G.f=1;G.sel=null;lit=null;
-    cubeM=[[1,0,0],[0,1,0],[0,0,1]];applyCube(false);
-    document.getElementById('spip').textContent='Inner shell';
-    document.getElementById('spip').className='spip inner';
-    document.getElementById('wb').style.display='none';
-    G.ifaces=mkFaces(G.N,genCube(G.N),G.innerGivens);
-    renderAll();updateActiveFaceUI();
-    cubeEl2.style.opacity='1';
-    setTimeout(()=>{cubeEl2.style.transition='';},400);
-  },350);
+  await new Promise(r=>setTimeout(r,350));
+  G.shell='inner';G.f=1;G.sel=null;lit=null;
+  cubeM=[[1,0,0],[0,1,0],[0,0,1]];applyCube(false);
+  document.getElementById('spip').textContent='Inner shell';
+  document.getElementById('spip').className='spip inner';
+  document.getElementById('wb').style.display='none';
+  document.getElementById('hintbtn').disabled=true;
+  const fprog=document.getElementById('fprog');
+  fprog.innerHTML='<div style="flex:1;text-align:center;font-size:12px;color:var(--tx2);padding:4px 0">Generating inner shell…</div>';
+  G.ifaces=mkFaces(G.N,await genCube(G.N),G.innerGivens);
+  document.getElementById('hintbtn').disabled=false;
+  renderAll();updateActiveFaceUI();
+  cubeEl2.style.opacity='1';
+  setTimeout(()=>{cubeEl2.style.transition='';},400);
 }
 
 const aFs=()=>G.shell==='inner'?G.ifaces:G.faces;
@@ -868,12 +882,22 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowDown'){e.preventDefault();swipeTo('D');}
 });
 
+document.getElementById('hintbtn').title='Reveal one correct number on the current face';
 document.getElementById('hintbtn').addEventListener('click',()=>{
+  if(!aFs()||busy)return;
   const N=G.N,fc=aFs()[G.f];
+  if(!fc)return;
   const emp=[];for(let i=0;i<N*N;i++)if(!fc.gvn[i]&&!fc.usr[i])emp.push(i);
-  if(!emp.length)return;
+  if(!emp.length)return; // all cells already filled
   const i=emp[(Math.random()*emp.length)|0];
-  fc.usr[i]=fc.sol[i];G.sel=i;
+  const v=fc.sol[i];
+  fc.usr[i]=v;
+  G.sel=i;
+  // autoSync: mirror hint to linked edge cell on adjacent face
+  if(autoSync){
+    const linked=getLinkedEdgeCell(G.f,i,N);
+    if(linked){const lfc=aFs()[linked.face];if(!lfc.gvn[linked.index])lfc.usr[linked.index]=v;}
+  }
   renderFace(G.f,true);renderProg();checkWin();
 });
 
