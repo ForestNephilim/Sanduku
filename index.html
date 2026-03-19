@@ -9,7 +9,7 @@
   --bg:#111318; --sur:#1c1d26; --sur2:#262733;
   --tx:#e8eaf4; --tx2:#5a5c72;
   --acc:#5b8ef0; --green:#4ade80; --red:#f06060;
-  --S: min(88vw, 420px);
+  --S: min(82vw, 400px);
   --H: calc(var(--S) / 2);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -98,8 +98,9 @@ body{
 .stage{
   flex:1;width:100%;
   display:flex;align-items:center;justify-content:center;
-  perspective:calc(var(--S)*2.2);perspective-origin:50% 48%;
+  perspective:calc(var(--S)*3);perspective-origin:50% 48%;
   touch-action:none;overflow:hidden;cursor:grab;
+  clip-path:inset(0);
 }
 .stage:active{cursor:grabbing}
 .cube{
@@ -325,104 +326,50 @@ function updateFaceRots(){
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ZONE COLOUR SYSTEM — PER SUDOKU BOX
-//
-// Colour is assigned per BOX (the 3×3 or 2×2 sub-grid), not per cell.
-// Every cell inside a box shares that box's colour.
-// Boxes map to sub-cube positions on the larger physical cube.
-//
-// Sub-cube positions:
-//   8 corners  (shared by 3 faces each) → indices 0-7
-//  12 edge-mids(shared by 2 faces each) → indices 8-19
-//   6 face-ctrs(belong to 1 face only)  → indices 20-25
-//
-// For 4×4 (2×2 box grid per face): only corner boxes exist → 8 colours used
-// For 9×9 (3×3 box grid per face): corners + edge-mids + centre → 26 colours
-//
-// Corner indices: C0=Top-Front-Left  C1=Top-Front-Right
-//                C2=Top-Back-Left   C3=Top-Back-Right
-//                C4=Bot-Front-Left  C5=Bot-Front-Right
-//                C6=Bot-Back-Left   C7=Bot-Back-Right
-//
-// Per face, box slots [TL,TR,BL,BR] → corner index:
-const FC=[
-  [0,1,2,3],  // 0 Top    (row0=Front side, col0=Left)  rotateX(-90°)→row0=+Z=Front
-  [0,1,4,5],  // 1 Front
-  [1,3,5,7],  // 2 Right  (col0=Front side)
-  [3,2,7,6],  // 3 Back   (col0=cube-Right)
-  [2,0,6,4],  // 4 Left   (col0=Back side)
-  [6,7,4,5],  // 5 Bottom (row0=Back side)  rotateX(+90°)→row0=-Z=Back
-];
-// Edge-mid indices per face [topMid, botMid, leftMid, rightMid]:
-const FE=[
-  [ 8,10,11, 9],  // 0 Top    topMid=TopFront(8), botMid=TopBack(10)
-  [ 8,12,16,17],  // 1 Front
-  [ 9,13,17,18],  // 2 Right
-  [10,14,18,19],  // 3 Back
-  [11,15,19,16],  // 4 Left
-  [14,12,15,13],  // 5 Bottom topMid=BotBack(14), botMid=BotFront(12)
-];
 
-// 26 colours: 8 corner + 12 edge-mid + 6 face-centre
-// Colours are consistent: the same index = the same colour on any face
-const ZCOL=[
-  // Corners 0-7 — strong distinct pastels
-  '#b8d4ff',  // C0 TFL — blue
-  '#ffc878',  // C1 TFR — amber
-  '#a0e8b0',  // C2 TBL — green
-  '#ffacc8',  // C3 TBR — rose
-  '#ccb8fc',  // C4 BFL — violet
-  '#f8e870',  // C5 BFR — yellow
-  '#80dce8',  // C6 BBL — teal
-  '#ffbea0',  // C7 BBR — peach
-  // Edge-mids 8-19 — softer, bridging adjacent corner colours
-  '#d0ecd0',  // 8  TopFront
-  '#d8e8ff',  // 9  TopRight
-  '#c8e0d8',  // 10 TopBack
-  '#e0d8ff',  // 11 TopLeft
-  '#fde8c0',  // 12 BotFront
-  '#fff0b0',  // 13 BotRight
-  '#c8f0e8',  // 14 BotBack
-  '#f0d0f0',  // 15 BotLeft
-  '#e0c8ff',  // 16 FrontLeft
-  '#ffe0b8',  // 17 FrontRight
-  '#d8f0e0',  // 18 BackRight
-  '#f8d8e8',  // 19 BackLeft
-  // Face-centres 20-25 — neutral, clearly interior
-  '#e8e4e0',  // 20 Top-centre
-  '#e8f4e8',  // 21 Front-centre
-  '#fff4e0',  // 22 Right-centre
-  '#e4e4f8',  // 23 Back-centre
-  '#fdf8e4',  // 24 Left-centre
-  '#e0f4f8',  // 25 Bottom-centre
+// ═══════════════════════════════════════════════════════════════
+// COLOUR SYSTEM — per face, per box
+//
+// Each face has its own hue. FACE_BOX_COLS[face] has 9 entries.
+// For 4×4 (2×2 boxes per face): use indices [0,2,6,8] (corners).
+// For 9×9 (3×3 boxes per face): use indices [0..8] linearly.
+// Zero geometry needed — can never be wrong.
+// ═══════════════════════════════════════════════════════════════
+const FACE_BOX_COLS=[
+  // 0 Top — blue
+  ['#e8f0ff','#d4e4ff','#c0d8ff',
+   '#ccdcf8','#b8d0f2','#a4c4ec',
+   '#b8ccf0','#a4c0ea','#90b4e4'],
+  // 1 Front — amber/honey
+  ['#fff8e4','#ffefcc','#ffe6b4',
+   '#fde09a','#fbd780','#f9ce66',
+   '#f6c04c','#f4b732','#f2ae18'],
+  // 2 Right — sage green
+  ['#e4f6e4','#ccedc8','#b4e4ac',
+   '#b8e4b0','#a0db98','#88d280',
+   '#a0dca0','#88d388','#70ca70'],
+  // 3 Back — lavender
+  ['#f4eeff','#e6ddff','#d8ccff',
+   '#e0ccfe','#d2bbf8','#c4aaf2',
+   '#d0aaee','#c299e8','#b488e2'],
+  // 4 Left — teal
+  ['#e4f6f4','#ccecea','#b4e2e0',
+   '#b8e2de','#a0d8d4','#88ceca',
+   '#a0dcd8','#88d2ce','#70c8c4'],
+  // 5 Bottom — rose
+  ['#fff0f4','#ffdde4','#ffcad4',
+   '#ffc8d0','#ffb5bc','#ffa2a8',
+   '#ffb4c0','#ffa1ac','#ff8e98'],
 ];
 
 const BX={4:{r:2,c:2},9:{r:3,c:3}};
 
-// Colour index for a cell: determined purely by which BOX the cell is in,
-// and where that box sits on the physical cube (corner/edge-mid/face-centre).
-function zoneIdx(face,cellI,N){
-  const {r:br,c:bc}=BX[N];
-  const row=(cellI/N)|0, col=cellI%N;
-  const bR=(row/br)|0, bC=(col/bc)|0;   // box row, box col on this face
-  const numBR=N/br, numBC=N/bc;          // number of box rows/cols
-
-  const top=bR===0, bot=bR===numBR-1;
-  const left=bC===0, right=bC===numBC-1;
-  const mR=!top&&!bot, mC=!left&&!right;
-
-  // Corner box
-  if(!mR&&!mC) return FC[face][(top?0:1)*2+(left?0:1)];
-  // Face-centre box
-  if(mR&&mC) return 20+face;
-  // Edge-mid box
-  const em=FE[face];
-  if(mR&&left)  return em[2];
-  if(mR&&right) return em[3];
-  if(mC&&top)   return em[0];
-  if(mC&&bot)   return em[1];
-  return 0;
+// Return the background colour for a cell given face, box-row, box-col, and N.
+// For 4×4 (2×2 boxes): map (bR,bC) to corners of the 9-slot palette [0,2,6,8].
+// For 9×9 (3×3 boxes): map linearly [0..8].
+function boxColor(face,bR,bC,N){
+  const idx=N===4 ? bR*6+bC*2 : bR*3+bC;
+  return FACE_BOX_COLS[face][idx];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -626,7 +573,7 @@ const MODES={
 // GAME STATE
 // ═══════════════════════════════════════════════════════════════
 let G={};
-let busy=false,lit=null;
+let busy=false,lit=null,swipeToken=0;
 
 function startGame(key){
   const mode=MODES[key];
@@ -638,7 +585,7 @@ function startGame(key){
   document.getElementById('spip').textContent='Outer shell';
   document.getElementById('spip').className='spip';
   document.getElementById('wb').style.display='none';
-  lit=null;busy=false;
+  lit=null;busy=false;++swipeToken;
   setTimeout(()=>{
     G.faces=mkFaces(mode.N,genCube(mode.N),mode.givens);
     renderAll();
@@ -709,9 +656,9 @@ function renderFace(fi,active){
   for(let i=0;i<N*N;i++){
     const cell=document.createElement('div');
     cell.className='cell';
-    cell.style.cssText=`font-size:${fs}px;background-color:${ZCOL[zoneIdx(fi,i,N)]}`;
-
     const row=(i/N)|0,col=i%N;
+    const bR=(row/br)|0,bC=(col/bc)|0;
+    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)}`;
     if(row>0&&row%br===0) cell.classList.add('bbt');
     if(col>0&&col%bc===0) cell.classList.add('bbl');
 
@@ -734,7 +681,6 @@ function renderFace(fi,active){
       }
       const idx=i;
       cell.addEventListener('click',()=>{
-        if(busy)return;
         if(lit!==null){G.sel=idx;enterNum(lit);return;}
         G.sel=(G.sel===idx)?null:idx;
         renderFace(G.f,true);
@@ -815,7 +761,19 @@ function swipeTo(dir){
   busy=true;G.sel=null;
   applyCube(true);
   renderFace(G.f,true);renderProg();
-  setTimeout(()=>{renderAll();updateActiveFaceUI();busy=false;},500);
+  // Use transitionend so renderAll fires exactly when animation finishes.
+  // A 600ms fallback handles cases where transitionend doesn't fire
+  // (e.g. tab hidden during animation).
+  const tok=++swipeToken;
+  let done=false;
+  function onDone(){
+    if(done||tok!==swipeToken)return;
+    done=true;
+    cubeEl.removeEventListener('transitionend',onDone);
+    renderAll();updateActiveFaceUI();busy=false;
+  }
+  cubeEl.addEventListener('transitionend',onDone);
+  setTimeout(onDone,600);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -902,29 +860,28 @@ document.getElementById('dlist').addEventListener('click',e=>{
 });
 document.getElementById('playbtn').addEventListener('click',()=>startGame(chosenKey));
 
-// Difficulty card mini-grids
-function buildMG(id,rows,cols){
+// Difficulty card mini-grids — each uses a different face palette
+function buildMG(id,rows,cols,faceIdx){
   const el=document.getElementById(id);el.innerHTML='';
   el.style.gridTemplateColumns=`repeat(${cols},1fr)`;
   el.style.gridTemplateRows=`repeat(${rows},1fr)`;
-  // Use the 8 zone colours in order
-  for(let i=0;i<rows*cols;i++){
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
     const sq=document.createElement('div');sq.className='dgsq';
-    sq.style.background=ZCOL[i%8];el.appendChild(sq);
+    sq.style.background=boxColor(faceIdx,r,c,rows===2?4:9);
+    el.appendChild(sq);
   }
 }
-buildMG('ig-beginner',2,2);buildMG('ig-easy',2,2);
-buildMG('ig-medium',3,3);buildMG('ig-hard',3,3);
+buildMG('ig-beginner',2,2,0);buildMG('ig-easy',2,2,1);
+buildMG('ig-medium',3,3,2);buildMG('ig-hard',3,3,4);
 
-// Preview spinning cube — 4 cells per face using FC corner colours
-const PF_COLS=FC.map(corners=>corners.map(ci=>ZCOL[ci]));
+// Preview spinning cube — 4 corner colours per face from FACE_BOX_COLS
 const pc=document.getElementById('pcube');
-PF_COLS.forEach(cols=>{
+FACE_BOX_COLS.forEach((cols,fi)=>{
   const f=document.createElement('div');f.className='pf';
   f.style.gridTemplateColumns='repeat(2,1fr)';
   f.style.gridTemplateRows='repeat(2,1fr)';
-  cols.forEach(col=>{
-    const sq=document.createElement('div');sq.className='psq';sq.style.background=col;
+  [0,2,6,8].forEach(idx=>{
+    const sq=document.createElement('div');sq.className='psq';sq.style.background=cols[idx];
     f.appendChild(sq);
   });
   pc.appendChild(f);
