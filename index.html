@@ -561,10 +561,18 @@ function getLinkedEdgeCell(face,i,N){
   return null;
 }
 
-// Highlight the active face with an accent ring
+// Highlight the active face and lock pointer-events.
+// pointer-events:none must be set on BOTH the .face div AND the .fg grid —
+// cells alone are not enough: the .fg background still absorbs clicks, and
+// overflow:hidden does NOT clip 3D-transformed children for pointer events,
+// so an inactive face's projected area can extend over the header/numpad.
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
-    el.classList.toggle('factive',i===G.f);
+    const active=(i===G.f);
+    el.classList.toggle('factive',active);
+    el.style.pointerEvents=active?'':'none';
+    const fg=el.querySelector('.fg');
+    if(fg) fg.style.pointerEvents=active?'':'none';
   });
 }
 
@@ -617,6 +625,8 @@ async function startGame(key){
   document.getElementById('spip').className='spip';
   document.getElementById('wb').style.display='none';
   lit=null;busy=true;++swipeToken; // busy=true blocks input while generating
+  // Clear old puzzle content and reset cube to blank BEFORE generation starts
+  for(let i=0;i<6;i++){const fg=document.getElementById('fg'+i);if(fg)fg.innerHTML='';}
   // Show a loading indicator while the puzzle is being generated
   const fprog=document.getElementById('fprog');
   fprog.innerHTML='<div class="gen-loading">Generating puzzle…</div>';
