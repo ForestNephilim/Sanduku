@@ -115,7 +115,11 @@ body{
 .face{
   position:absolute;width:var(--S);height:var(--S);
   border-radius:10px;overflow:hidden;
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  /* backface-visibility removed: it caused browsers to silently block pointer
+     events on faces 3 (rotateY180) and 5 (rotateX90) even when they faced the
+     viewer, because the compositor classifies them "back-facing" at a level
+     below CSS pointer-events. We manage all click gating via .face.factive. */
+  pointer-events:none;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5);
 }
 [data-f="0"]{transform:rotateX(-90deg) translateZ(var(--H))} /* Top    */
@@ -148,8 +152,8 @@ body{
 .cell.bbt{border-top:  2.5px solid rgba(0,0,0,.48)}
 .cell.bbl{border-left: 2.5px solid rgba(0,0,0,.48)}
 .cell.edgehl::after{content:'';position:absolute;inset:0;border:2.5px dashed rgba(255,255,255,.75);pointer-events:none;z-index:3}
-.face.factive{box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc)}
-
+.cell.given{cursor:default}
+.face.factive{pointer-events:auto;box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc)}
 .wb{
   display:none;margin:0 14px 4px;padding:10px 14px;
   background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.22);
@@ -561,18 +565,14 @@ function getLinkedEdgeCell(face,i,N){
   return null;
 }
 
-// Highlight the active face and lock pointer-events.
-// pointer-events:none must be set on BOTH the .face div AND the .fg grid —
-// cells alone are not enough: the .fg background still absorbs clicks, and
-// overflow:hidden does NOT clip 3D-transformed children for pointer events,
-// so an inactive face's projected area can extend over the header/numpad.
+// Highlight the active face. pointer-events is now controlled entirely via
+// CSS: .face{pointer-events:none} and .face.factive{pointer-events:auto}.
+// Removing the inline-style approach was necessary because backface-visibility
+// was being used by the browser compositor to silently block pointer events on
+// faces 3 and 5, at a level that inline-style overrides cannot reach.
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
-    const active=(i===G.f);
-    el.classList.toggle('factive',active);
-    el.style.pointerEvents=active?'':'none';
-    const fg=el.querySelector('.fg');
-    if(fg) fg.style.pointerEvents=active?'':'none';
+    el.classList.toggle('factive',i===G.f);
   });
 }
 
@@ -707,10 +707,7 @@ function renderFace(fi,active){
     cell.className='cell';
     const row=(i/N)|0,col=i%N;
     const bR=(row/br)|0,bC=(col/bc)|0;
-    // pointer-events:none on cells of inactive faces is the most reliable
-    // cross-browser fix for 3D-transformed face hit-testing.
-    const pe=active?'':'none';
-    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)};pointer-events:${pe}`;
+    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)}`;
     if(row>0&&row%br===0) cell.classList.add('bbt');
     if(col>0&&col%bc===0) cell.classList.add('bbl');
 
@@ -734,8 +731,8 @@ function renderFace(fi,active){
           if(sr===row||sc===col||sameBox) cell.classList.add('hl');
         }
       }
-      // Cell-level pointer-events:none (set above) is the primary guard.
-      // G.f check here is a belt-and-suspenders fallback.
+      // .face.factive{pointer-events:auto} in CSS is the primary guard.
+      // G.f check is belt-and-suspenders for any edge case.
       const idx=i,faceIdx=fi;
       cell.addEventListener('click',()=>{
         if(busy||G.f!==faceIdx)return;
@@ -835,10 +832,9 @@ function swipeTo(dir){
   function onDone(){
     if(done||tok!==swipeToken)return;
     done=true;
-    cubeEl.removeEventListener('transitionend',onDone);
     renderAll();updateFaceRots();updateActiveFaceUI();busy=false;
   }
-  cubeEl.addEventListener('transitionend',onDone);
+  cubeEl.addEventListener('transitionend',onDone,{once:true});
   setTimeout(onDone,600);
 }
 
