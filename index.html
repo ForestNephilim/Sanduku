@@ -9,7 +9,7 @@
   --bg:#111318; --sur:#1c1d26; --sur2:#262733;
   --tx:#e8eaf4; --tx2:#5a5c72;
   --acc:#5b8ef0; --green:#4ade80; --red:#f06060;
-  --S: min(82vw, 400px);
+  --S: min(82vw, 82vh, 400px);
   --H: calc(var(--S) / 2);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -100,7 +100,6 @@ body{
   display:flex;align-items:center;justify-content:center;
   perspective:calc(var(--S)*3);perspective-origin:50% 48%;
   touch-action:none;overflow:hidden;cursor:grab;
-  clip-path:inset(0);
 }
 .stage:active{cursor:grabbing}
 .cube{
@@ -672,15 +671,25 @@ function renderFace(fi,active){
 
     if(fc.gvn[i]){
       cell.classList.add('given');
-    }else if(active){
-      if(G.sel===i) cell.classList.add('sel');
-      else if(G.sel!==null){
-        const sr=(G.sel/N)|0,sc=G.sel%N;
-        const sameBox=((sr/br)|0)===((row/br)|0)&&((sc/bc)|0)===((col/bc)|0);
-        if(sr===row||sc===col||sameBox) cell.classList.add('hl');
+    }else{
+      // Visual sel/hl — only when this face was rendered as active
+      if(active){
+        if(G.sel===i) cell.classList.add('sel');
+        else if(G.sel!==null){
+          const sr=(G.sel/N)|0,sc=G.sel%N;
+          const sameBox=((sr/br)|0)===((row/br)|0)&&((sc/bc)|0)===((col/bc)|0);
+          if(sr===row||sc===col||sameBox) cell.classList.add('hl');
+        }
       }
-      const idx=i;
+      // Every non-given cell gets a click handler.
+      // At click time, ask the cube geometry directly — facingFace(cubeM) is
+      // always ground truth, so the right face always works regardless of what
+      // G.f was when cells were last rendered.
+      const idx=i,faceIdx=fi;
       cell.addEventListener('click',()=>{
+        if(busy)return;
+        if(facingFace(cubeM)!==faceIdx)return; // not the active face
+        G.f=faceIdx; // sync G.f to geometry
         if(lit!==null){G.sel=idx;enterNum(lit);return;}
         G.sel=(G.sel===idx)?null:idx;
         renderFace(G.f,true);
