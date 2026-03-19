@@ -114,6 +114,7 @@ body{
   border-radius:10px;overflow:hidden;
   backface-visibility:hidden;-webkit-backface-visibility:hidden;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5);
+  pointer-events:none; /* only the active face gets pointer-events:auto */
 }
 [data-f="0"]{transform:rotateX(-90deg) translateZ(var(--H))} /* Top    */
 [data-f="1"]{transform:translateZ(var(--H))}                  /* Front  */
@@ -547,15 +548,30 @@ function getLinkedEdgeCell(face,i,N){
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
     el.classList.toggle('factive',i===G.f);
+    el.style.pointerEvents=(i===G.f)?'auto':'none';
   });
 }
 
 function mkFaces(N,sols,givens){
-  return sols.map(sol=>{
+  const faces=sols.map(sol=>{
     const puz=Array(N*N).fill(0);
     shuf([...Array(N*N).keys()]).slice(0,givens).forEach(i=>puz[i]=sol[i]);
     return{sol,puz,usr:Array(N*N).fill(0),gvn:puz.map(v=>v>0)};
   });
+  // Pre-populate linked cells: if a given sits on an edge, mirror its value
+  // to the adjacent face's matching cell (as a soft pre-fill, not a given).
+  faces.forEach((fc,fi)=>{
+    fc.gvn.forEach((isGiven,i)=>{
+      if(!isGiven)return;
+      const linked=getLinkedEdgeCell(fi,i,N);
+      if(!linked)return;
+      const lfc=faces[linked.face];
+      if(!lfc.gvn[linked.index]&&!lfc.usr[linked.index]){
+        lfc.usr[linked.index]=fc.puz[i];
+      }
+    });
+  });
+  return faces;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -755,10 +771,16 @@ function enterNum(v){
   const prevSel=G.sel;
   fc.usr[G.sel]=v;
   if(v)G.sel=null;
-  // Auto-sync: mirror to paired edge cell on adjacent face
-  if(autoSync&&v){
+  // Auto-sync: mirror to paired edge cell on adjacent face (fill and erase)
+  if(autoSync){
     const linked=getLinkedEdgeCell(G.f,prevSel,G.N);
-    if(linked){const lfc=aFs()[linked.face];if(!lfc.gvn[linked.index])lfc.usr[linked.index]=v;}
+    if(linked){
+      const lfc=aFs()[linked.face];
+      if(!lfc.gvn[linked.index]){
+        if(v) lfc.usr[linked.index]=v;
+        else lfc.usr[linked.index]=0; // also clear on erase
+      }
+    }
   }
   renderFace(G.f,true);renderProg();checkWin();
 }
@@ -768,6 +790,8 @@ function swipeTo(dir){
   cubeM=snap3(mul3(ROT[dir],cubeM));
   G.f=facingFace(cubeM);
   busy=true;G.sel=null;
+  lit=null;renderPad(); // clear selected number when face changes
+  updateActiveFaceUI(); // immediately lock pointer-events; don't wait for animation
   applyCube(true);
   renderFace(G.f,true);renderProg();
   // Use transitionend so renderAll fires exactly when animation finishes.
@@ -779,7 +803,7 @@ function swipeTo(dir){
     if(done||tok!==swipeToken)return;
     done=true;
     cubeEl.removeEventListener('transitionend',onDone);
-    renderAll();updateActiveFaceUI();busy=false;
+    renderAll();updateFaceRots();updateActiveFaceUI();busy=false;
   }
   cubeEl.addEventListener('transitionend',onDone);
   setTimeout(onDone,600);
