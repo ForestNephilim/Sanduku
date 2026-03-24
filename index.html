@@ -115,11 +115,7 @@ body{
 .face{
   position:absolute;width:var(--S);height:var(--S);
   border-radius:10px;overflow:hidden;
-  /* backface-visibility removed: it caused browsers to silently block pointer
-     events on faces 3 (rotateY180) and 5 (rotateX90) even when they faced the
-     viewer, because the compositor classifies them "back-facing" at a level
-     below CSS pointer-events. We manage all click gating via .face.factive. */
-  pointer-events:none;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5);
 }
 [data-f="0"]{transform:rotateX(-90deg) translateZ(var(--H))} /* Top    */
@@ -153,7 +149,8 @@ body{
 .cell.bbl{border-left: 2.5px solid rgba(0,0,0,.48)}
 .cell.edgehl::after{content:'';position:absolute;inset:0;border:2.5px dashed rgba(255,255,255,.75);pointer-events:none;z-index:3}
 .cell.given{cursor:default}
-.face.factive{pointer-events:auto;box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc)}
+.face.factive{box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc)}
+
 .wb{
   display:none;margin:0 14px 4px;padding:10px 14px;
   background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.22);
@@ -565,14 +562,18 @@ function getLinkedEdgeCell(face,i,N){
   return null;
 }
 
-// Highlight the active face. pointer-events is now controlled entirely via
-// CSS: .face{pointer-events:none} and .face.factive{pointer-events:auto}.
-// Removing the inline-style approach was necessary because backface-visibility
-// was being used by the browser compositor to silently block pointer events on
-// faces 3 and 5, at a level that inline-style overrides cannot reach.
+// Highlight the active face and lock pointer-events on all others.
+// pointer-events:none must be set on BOTH the .face div AND the .fg grid —
+// cells alone are not enough: the .fg background still absorbs clicks, and
+// overflow:hidden does NOT clip 3D-transformed children for pointer events,
+// so an inactive face's projected area can extend over the header/numpad.
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
-    el.classList.toggle('factive',i===G.f);
+    const active=(i===G.f);
+    el.classList.toggle('factive',active);
+    el.style.pointerEvents=active?'':'none';
+    const fg=el.querySelector('.fg');
+    if(fg) fg.style.pointerEvents=active?'':'none';
   });
 }
 
@@ -731,8 +732,8 @@ function renderFace(fi,active){
           if(sr===row||sc===col||sameBox) cell.classList.add('hl');
         }
       }
-      // .face.factive{pointer-events:auto} in CSS is the primary guard.
-      // G.f check is belt-and-suspenders for any edge case.
+      // Faces 0,1,2,4 receive clicks here normally.
+      // Faces 3 and 5 fall through to the stage click handler (backface bug).
       const idx=i,faceIdx=fi;
       cell.addEventListener('click',()=>{
         if(busy||G.f!==faceIdx)return;
@@ -895,6 +896,46 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight')swipeTo('R');
   else if(e.key==='ArrowUp'){e.preventDefault();swipeTo('U');}
   else if(e.key==='ArrowDown'){e.preventDefault();swipeTo('D');}
+});
+
+// ═══════════════════════════════════════════════════════════════
+// STAGE CLICK — fallback for faces 3 & 5
+//
+// Faces 3 (rotateY180) and 5 (rotateX90) are permanently classified
+// as "back-facing" by the browser compositor based on their initial
+// CSS transforms. backface-visibility:hidden must stay (removing it
+// causes invisible back-faces to ghost over the UI and block the header).
+//
+// When the cube rotates to bring face 3 or 5 forward, their cells
+// have pointer-events set but the compositor silently ignores them.
+// Clicks fall straight through the face element to the stage div.
+// We catch them here and map screen coords → cell index ourselves.
+// ═══════════════════════════════════════════════════════════════
+stage.addEventListener('click',e=>{
+  if(busy||!aFs()||G.f!==3&&G.f!==5)return;
+  const fc=aFs()[G.f];if(!fc)return;
+  // Use the fg element's projected bounding rect as the reference —
+  // getBoundingClientRect() on a 3D-transformed element returns its
+  // 2D axis-aligned screen rect, which is accurate when the face is
+  // flat-on toward the viewer.
+  const fg=document.getElementById('fg'+G.f);
+  if(!fg)return;
+  const rect=fg.getBoundingClientRect();
+  let vx=(e.clientX-rect.left)/rect.width;
+  let vy=(e.clientY-rect.top)/rect.height;
+  if(vx<0||vx>1||vy<0||vy>1)return; // click missed the face
+  vx=Math.min(.9999,vx); vy=Math.min(.9999,vy);
+  const N=G.N,rot=faceContentRot(G.f);
+  let gc,gr;
+  if     (rot===0)  {gc=Math.floor(vx*N);    gr=Math.floor(vy*N);}
+  else if(rot===90) {gc=Math.floor((1-vy)*N);gr=Math.floor(vx*N);}
+  else if(rot===-90){gc=Math.floor(vy*N);    gr=Math.floor((1-vx)*N);}
+  else              {gc=Math.floor((1-vx)*N);gr=Math.floor((1-vy)*N);}
+  const idx=gr*N+gc;
+  if(idx<0||idx>=N*N||fc.gvn[idx])return;
+  if(lit!==null){G.sel=idx;enterNum(lit);return;}
+  G.sel=(G.sel===idx)?null:idx;
+  renderFace(G.f,true);
 });
 
 document.getElementById('hintbtn').title='Reveal one correct number on the current face';
