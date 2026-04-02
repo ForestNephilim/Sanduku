@@ -731,6 +731,7 @@
           <div class="fg" id="fg5"></div>
         </div>
       </div>
+      <div id="frontplate" class="face factive" style="display: none; z-index: 20;"></div>
     </div>
     <div class="wb" id="wb"></div>
     <div class="npwrap">
@@ -1087,22 +1088,42 @@
     }
 
     // Highlight the active face and lock pointer-events on all others.
-    // pointer-events:none must be set on BOTH the .face div AND the .fg grid —
-    // cells alone are not enough: the .fg background still absorbs clicks, and
-    // overflow:hidden does NOT clip 3D-transformed children for pointer events.
-    // Additionally, we dynamically toggle backface-visibility to visible on
-    // the active face. This prevents the browser compositor from mistakenly
-    // categorizing rotated active faces as back-facing, which would otherwise drop inputs.
     function updateActiveFaceUI() {
       document.querySelectorAll('.face').forEach((el, i) => {
         const active = (i === G.f);
         el.classList.toggle('factive', active);
-        el.style.pointerEvents = active ? '' : 'none';
+        el.style.pointerEvents = 'none'; // NEVER allow raw 3D DOM to steal hits via Safari cull plane!
         el.style.backfaceVisibility = active ? 'visible' : 'hidden';
         el.style.webkitBackfaceVisibility = active ? 'visible' : 'hidden';
         const fg = el.querySelector('.fg');
         if (fg) fg.style.pointerEvents = active ? '' : 'none';
       });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FRONTPLATE SWAPPING ENGINE
+    // Webkit destroys native :hover and click events on deeply rotated 
+    // 3D elements in its render tree. We perfectly dodge this by yoinking 
+    // the currently active grid into a flat un-rotated 2D overlay container 
+    // instantly after each swipe animates. It is 100% bug proof.
+    // ═══════════════════════════════════════════════════════════════
+    function mountFrontplate() {
+      const fp = document.getElementById('frontplate');
+      const fg = document.getElementById(`fg${G.f}`);
+      if (fg) fp.appendChild(fg);
+      const zRot = -faceContentRot(G.f);
+      fp.style.transform = `translateZ(var(--H)) rotateZ(${zRot}deg)`;
+      fp.style.display = 'block';
+    }
+
+    function unmountFrontplate() {
+      const fp = document.getElementById('frontplate');
+      const fg = fp.firstElementChild;
+      if (fg) {
+        const faceSlot = document.querySelector(`.face[data-f="${G.f}"]`);
+        if (faceSlot) faceSlot.appendChild(fg);
+      }
+      fp.style.display = 'none';
     }
 
     function mkFaces(N, sols, givens) {
@@ -1167,6 +1188,7 @@
       renderAll();
       updateFaceRots();
       updateActiveFaceUI();
+      mountFrontplate();
     }
 
     async function enterInner() {
@@ -1175,6 +1197,9 @@
       cubeEl2.style.transition = 'opacity 0.35s ease';
       cubeEl2.style.opacity = '0';
       await new Promise(r => setTimeout(r, 350));
+      
+      unmountFrontplate();
+      
       G.shell = 'inner'; G.f = 1; G.sel = null; lit = null;
       cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; applyCube(false);
       document.getElementById('spip').textContent = 'Inner shell';
@@ -1185,7 +1210,7 @@
       fprog.innerHTML = '<div class="gen-loading">Generating inner shell…</div>';
       G.ifaces = mkFaces(G.N, await genCube(G.N), G.innerGivens);
       document.getElementById('hintbtn').disabled = false;
-      renderAll(); updateActiveFaceUI();
+      renderAll(); updateActiveFaceUI(); mountFrontplate();
       cubeEl2.style.opacity = '1';
       setTimeout(() => { cubeEl2.style.transition = ''; }, 400);
     }
@@ -1262,9 +1287,15 @@
               if (sr === row || sc === col || sameBox) cell.classList.add('hl');
             }
           }
-          // The native cell click event has been exclusively shifted to handleStageTap 
-          // raycaster on the .stage wrapper. DO NOT bind cell events here, as Safari iOS 
-          // aggressively culls rotated 3D nested objects from the hit-test tree.
+          // Native DOM cell click interactions!
+          // Extracted reliably to the 2D frontplate avoiding rendering drops.
+          const idx = i, faceIdx = fi;
+          cell.addEventListener('click', () => {
+            if (busy || G.f !== faceIdx) return;
+            if (lit !== null) { G.sel = idx; enterNum(lit); return; }
+            G.sel = (G.sel === idx) ? null : idx;
+            renderFace(G.f, true);
+          });
         }
         // Edge-cell hover: highlight the counterpart on the adjacent face
         const linked = getLinkedEdgeCell(fi, i, N);
@@ -1342,6 +1373,8 @@
 
     function swipeTo(dir) {
       if (busy) return;
+      unmountFrontplate();
+      
       cubeM = snap3(mul3(ROT[dir], cubeM));
       G.f = facingFace(cubeM);
       busy = true; G.sel = null;
@@ -1358,6 +1391,7 @@
         if (done || tok !== swipeToken) return;
         done = true;
         renderAll(); updateFaceRots(); updateActiveFaceUI(); busy = false;
+        mountFrontplate();
       }
       cubeEl.addEventListener('transitionend', onDone, { once: true });
       setTimeout(onDone, 600);
@@ -1365,11 +1399,6 @@
 
     // ═══════════════════════════════════════════════════════════════
     // INPUT — touch, mouse, keyboard
-    //
-    // KEY FIX: touchstart uses passive:true (no preventDefault).
-    // This preserves synthetic click events on child cells.
-    // touch-action:none on .stage already prevents page scrolling.
-    // We detect swipe vs tap by watching touchmove with a threshold.
     // ═══════════════════════════════════════════════════════════════
     const stage = document.getElementById('stage');
     let tx = 0, ty = 0, tOn = false, tMoved = false;
@@ -1392,12 +1421,9 @@
 
     stage.addEventListener('touchend', e => {
       if (!tOn) return; tOn = false;
+      if (!tMoved) return; // pure tap is safely handled natively by DOM clicks on #frontplate
       const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-      if (!tMoved || Math.max(Math.abs(dx), Math.abs(dy)) < 18) {
-        // pure tap sequence bypasses OS click lock
-        handleStageTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        return;
-      }
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
       swipeTo(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'U' : 'D'));
     }, { passive: true });
 
@@ -1408,12 +1434,9 @@
     });
     window.addEventListener('mouseup', e => {
       if (!mOn) return; mOn = false;
+      if (!mMoved) return;
       const dx = e.clientX - mx, dy = e.clientY - my;
-      if (!mMoved || Math.max(Math.abs(dx), Math.abs(dy)) < 16) {
-        // native mouse tap bypasses dropped click events
-        handleStageTap(e.clientX, e.clientY);
-        return;
-      }
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 16) return;
       swipeTo(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'U' : 'D'));
     });
 
@@ -1428,51 +1451,7 @@
       else if (e.key === 'ArrowDown') { e.preventDefault(); swipeTo('D'); }
     });
 
-    // ═══════════════════════════════════════════════════════════════
-    // STAGE CLICK — fallback coordinate raycaster
-    // ═══════════════════════════════════════════════════════════════
-    function handleStageTap(clientX, clientY) {
-      if (busy || !aFs()) return;
-      const fc = aFs()[G.f];
-      if (!fc) return;
 
-      const sRect = stage.getBoundingClientRect();
-      const S = Math.min(window.innerWidth * 0.82, window.innerHeight * 0.82, 400);
-
-      // Calculate depth perspective scale. 
-      // Camera is P = S*3 away. The front face is Z = S/2 towards the camera. 
-      // Rendered visual scale on projection plane = P / (P - Z) = 3 / 2.5 = 1.2
-      const visual_S = S * 1.2;
-
-      const cx = sRect.left + sRect.width / 2;
-      const cy = sRect.top + sRect.height / 2;
-      const left = cx - visual_S / 2;
-      const top = cy - visual_S / 2;
-
-      let vx = (clientX - left) / visual_S;
-      let vy = (clientY - top) / visual_S;
-      if (vx < 0 || vx > 1 || vy < 0 || vy > 1) return;
-      vx = Math.min(.9999, Math.max(0, vx));
-      vy = Math.min(.9999, Math.max(0, vy));
-
-      const N = G.N, rot = faceContentRot(G.f);
-      let gc, gr;
-      if (rot === 0) { gc = Math.floor(vx * N); gr = Math.floor(vy * N); }
-      else if (rot === 90) { gc = Math.floor(vy * N); gr = Math.floor((1 - vx) * N); }
-      else if (rot === -90) { gc = Math.floor((1 - vy) * N); gr = Math.floor(vx * N); }
-      else { gc = Math.floor((1 - vx) * N); gr = Math.floor((1 - vy) * N); }
-
-      const idx = gr * N + gc;
-      if (idx < 0 || idx >= N * N || fc.gvn[idx]) return;
-      if (lit !== null) { G.sel = idx; enterNum(lit); return; }
-      G.sel = (G.sel === idx) ? null : idx;
-      renderFace(G.f, true);
-    }
-
-    stage.addEventListener('click', e => {
-      // standard desktop click pipeline
-      handleStageTap(e.clientX, e.clientY);
-    });
 
     // ═══════════════════════════════════════════════════════════════
     // HINTS & NAVIGATION
