@@ -1,1007 +1,1487 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Sanduku</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
-:root {
-  --bg: #0b0c10;
-  --sur: rgba(28, 29, 38, 0.45);
-  --sur2: rgba(45, 47, 61, 0.65);
-  --tx: #f3f4f6; --tx2: #9ca3af;
-  --acc: #8b5cf6; --acc2: #3b82f6;
-  --green: #10b981; --red: #ef4444;
-  --S: min(82vw, 82vh, 400px);
-  --H: calc(var(--S) / 2);
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{
-  font-family: 'Outfit', -apple-system, sans-serif;
-  background-color: var(--bg);
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 45%),
-    radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 45%);
-  color: var(--tx);
-  height: 100dvh; display: flex; flex-direction: column; align-items: center;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Sanduku</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
-/* ═══ MENU ═════════════════════════════════════════════════════ */
-#menu{
-  position:fixed;inset:0;z-index:20;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:28px 22px;overflow-y:auto;background:transparent;
-}
-#menu.gone{display:none}
-.m-logo{
-  font-size:clamp(52px,16vw,78px);font-weight:900;letter-spacing:-4px;line-height:1;
-  background: linear-gradient(to right, #a78bfa, #60a5fa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.m-tag{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:5px;text-transform:uppercase;margin:5px 0 28px}
+    :root {
+      --bg: #0b0c10;
+      --sur: rgba(28, 29, 38, 0.45);
+      --sur2: rgba(45, 47, 61, 0.65);
+      --tx: #f3f4f6;
+      --tx2: #9ca3af;
+      --acc: #8b5cf6;
+      --acc2: #3b82f6;
+      --green: #10b981;
+      --red: #ef4444;
+      --S: min(82vw, 82vh, 400px);
+      --H: calc(var(--S) / 2);
+    }
 
-.pw{perspective:360px;width:90px;height:90px;margin-bottom:26px}
-.pc{width:90px;height:90px;position:relative;transform-style:preserve-3d;animation:pspin 11s linear infinite}
-@keyframes pspin{to{transform:rotateX(22deg) rotateY(360deg)}}
-.pf{
-  position:absolute;width:90px;height:90px;
-  border-radius:9px;display:grid;gap:4px;padding:7px;
-  border:1.5px solid rgba(255,255,255,.07);background:#14151f;
-}
-.pf:nth-child(1){transform:rotateX(-90deg) translateZ(45px)} /* Top    */
-.pf:nth-child(2){transform:translateZ(45px)}                  /* Front  */
-.pf:nth-child(3){transform:rotateY(-90deg) translateZ(45px)}  /* Right  */
-.pf:nth-child(4){transform:rotateY(180deg) translateZ(45px)}  /* Back   */
-.pf:nth-child(5){transform:rotateY(90deg)  translateZ(45px)}  /* Left   */
-.pf:nth-child(6){transform:rotateX(90deg)  translateZ(45px)}  /* Bottom */
-.psq{border-radius:3px}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent
+    }
 
-.diff-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px}
-.dcard{
-  display:flex;align-items:center;gap:14px;padding:14px 16px;
-  background:var(--sur);border:1.5px solid rgba(255,255,255,0.05);border-radius:18px;cursor:pointer;
-  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-}
-.dcard:hover{background:var(--sur2); transform: translateY(-3px); border-color: rgba(255,255,255,0.15);}
-.dcard.sel{border-color:var(--acc); box-shadow: 0 4px 24px rgba(139, 92, 246, 0.25);}
-.dgrid{
-  width:40px;height:40px;flex-shrink:0;display:grid;gap:3px;padding:4px;
-  background:rgba(255,255,255,.04);border-radius:9px;
-}
-.dgsq{border-radius:2px}
-.dname{font-size:16px;font-weight:700}
-.ddesc{font-size:13px;color:var(--tx2);margin-top:2px}
-.dradio{width:22px;height:22px;border-radius:50%;border:2px solid var(--tx2);flex-shrink:0;margin-left:auto;transition:all .2s}
-.dcard.sel .dradio{background:var(--acc);border-color:var(--acc); box-shadow: inset 0 0 0 4px var(--sur), 0 0 8px rgba(139,92,246,0.6);}
-.play-btn{
-  width:100%;max-width:340px;margin-top:18px;padding:18px;
-  font-size:18px;font-weight:800;border:none;border-radius:18px;
-  background: linear-gradient(135deg, var(--acc), var(--acc2));
-  color:#fff;cursor:pointer;font-family:inherit;
-  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-}
-.play-btn:hover{transform:translateY(-2px); box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);}
-.play-btn:active{transform:scale(.96);}
+    html,
+    body {
+      height: 100%;
+      overflow: hidden
+    }
 
-/* ═══ GAME ══════════════════════════════════════════════════════ */
-#game{
-  position:fixed;inset:0;z-index:10;
-  display:none;flex-direction:column;align-items:center;background:transparent;
-}
-#game.show{display:flex}
-.gh{display:flex;align-items:center;gap:10px;width:100%;padding:max(14px,env(safe-area-inset-top)) 14px 6px;flex-shrink:0}
-.back-btn{
-  width:38px;height:38px;border-radius:12px;
-  background:var(--sur);border:1px solid rgba(255,255,255,0.08);
-  color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  transition: all .15s;
-}
-.back-btn:hover{background:var(--sur2); transform: scale(1.05);}
-.back-btn:active{transform: scale(0.95);}
-.gtitle{font-size:17px;font-weight:800;letter-spacing:-.5px}
-.spip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;background:rgba(91,142,240,.15);color:var(--acc)}
-.spip.inner{background:rgba(167,139,250,.15);color:#a78bfa}
-.hbtn{margin-left:auto;padding:5px 12px;font-size:12px;background:var(--sur);border:none;border-radius:8px;color:var(--tx2);cursor:pointer;font-family:inherit}
-.hbtn:hover{color:var(--tx);background:var(--sur2)}
-.hbtn:disabled{opacity:.35;cursor:default}
-@keyframes genPulse{0%,100%{opacity:.35}50%{opacity:1}}
-.gen-loading{animation:genPulse 1.2s ease-in-out infinite;font-size:12px;color:var(--tx2);text-align:center;flex:1;padding:4px 0}
-.fprog{display:flex;gap:5px;padding:0 14px 5px;flex-shrink:0;width:100%}
-.fpip{flex:1;height:4px;border-radius:2px;background:var(--sur2);transition:background .25s}
-.fpip.active{background:var(--acc)}
-.fpip.done{background:var(--green)}
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 45%),
+        radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 45%);
+      color: var(--tx);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-/* ═══ 3-D CUBE ═══════════════════════════════════════════════════
+    /* ═══ MENU ═════════════════════════════════════════════════════ */
+    #menu {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 22px;
+      overflow-y: auto;
+      background: transparent;
+    }
+
+    #menu.gone {
+      display: none
+    }
+
+    .m-logo {
+      font-size: clamp(52px, 16vw, 78px);
+      font-weight: 900;
+      letter-spacing: -4px;
+      line-height: 1;
+      background: linear-gradient(to right, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .m-tag {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tx2);
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin: 5px 0 28px
+    }
+
+    .pw {
+      perspective: 360px;
+      width: 90px;
+      height: 90px;
+      margin-bottom: 26px
+    }
+
+    .pc {
+      width: 90px;
+      height: 90px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: pspin 11s linear infinite
+    }
+
+    @keyframes pspin {
+      to {
+        transform: rotateX(22deg) rotateY(360deg)
+      }
+    }
+
+    .pf {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+      border-radius: 9px;
+      display: grid;
+      gap: 4px;
+      padding: 7px;
+      border: 1.5px solid rgba(255, 255, 255, .07);
+      background: #14151f;
+    }
+
+    .pf:nth-child(1) {
+      transform: rotateX(-90deg) translateZ(45px)
+    }
+
+    /* Top    */
+    .pf:nth-child(2) {
+      transform: translateZ(45px)
+    }
+
+    /* Front  */
+    .pf:nth-child(3) {
+      transform: rotateY(-90deg) translateZ(45px)
+    }
+
+    /* Right  */
+    .pf:nth-child(4) {
+      transform: rotateY(180deg) translateZ(45px)
+    }
+
+    /* Back   */
+    .pf:nth-child(5) {
+      transform: rotateY(90deg) translateZ(45px)
+    }
+
+    /* Left   */
+    .pf:nth-child(6) {
+      transform: rotateX(90deg) translateZ(45px)
+    }
+
+    /* Bottom */
+    .psq {
+      border-radius: 3px
+    }
+
+    .diff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      max-width: 340px
+    }
+
+    .dcard {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--sur);
+      border: 1.5px solid rgba(255, 255, 255, 0.05);
+      border-radius: 18px;
+      cursor: pointer;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .dcard:hover {
+      background: var(--sur2);
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .dcard.sel {
+      border-color: var(--acc);
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.25);
+    }
+
+    .dgrid {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      display: grid;
+      gap: 3px;
+      padding: 4px;
+      background: rgba(255, 255, 255, .04);
+      border-radius: 9px;
+    }
+
+    .dgsq {
+      border-radius: 2px
+    }
+
+    .dname {
+      font-size: 16px;
+      font-weight: 700
+    }
+
+    .ddesc {
+      font-size: 13px;
+      color: var(--tx2);
+      margin-top: 2px
+    }
+
+    .dradio {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--tx2);
+      flex-shrink: 0;
+      margin-left: auto;
+      transition: all .2s
+    }
+
+    .dcard.sel .dradio {
+      background: var(--acc);
+      border-color: var(--acc);
+      box-shadow: inset 0 0 0 4px var(--sur), 0 0 8px rgba(139, 92, 246, 0.6);
+    }
+
+    .play-btn {
+      width: 100%;
+      max-width: 340px;
+      margin-top: 18px;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 800;
+      border: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--acc), var(--acc2));
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
+    }
+
+    .play-btn:active {
+      transform: scale(.96);
+    }
+
+    /* ═══ GAME ══════════════════════════════════════════════════════ */
+    #game {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      background: transparent;
+    }
+
+    #game.show {
+      display: flex
+    }
+
+    .gh {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: max(14px, env(safe-area-inset-top)) 14px 6px;
+      flex-shrink: 0
+    }
+
+    .back-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--sur);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--tx);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all .15s;
+    }
+
+    .back-btn:hover {
+      background: var(--sur2);
+      transform: scale(1.05);
+    }
+
+    .back-btn:active {
+      transform: scale(0.95);
+    }
+
+    .gtitle {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -.5px
+    }
+
+    .spip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: rgba(91, 142, 240, .15);
+      color: var(--acc)
+    }
+
+    .spip.inner {
+      background: rgba(167, 139, 250, .15);
+      color: #a78bfa
+    }
+
+    .hbtn {
+      margin-left: auto;
+      padding: 5px 12px;
+      font-size: 12px;
+      background: var(--sur);
+      border: none;
+      border-radius: 8px;
+      color: var(--tx2);
+      cursor: pointer;
+      font-family: inherit
+    }
+
+    .hbtn:hover {
+      color: var(--tx);
+      background: var(--sur2)
+    }
+
+    .hbtn:disabled {
+      opacity: .35;
+      cursor: default
+    }
+
+    @keyframes genPulse {
+
+      0%,
+      100% {
+        opacity: .35
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    .gen-loading {
+      animation: genPulse 1.2s ease-in-out infinite;
+      font-size: 12px;
+      color: var(--tx2);
+      text-align: center;
+      flex: 1;
+      padding: 4px 0
+    }
+
+    .fprog {
+      display: flex;
+      gap: 5px;
+      padding: 0 14px 5px;
+      flex-shrink: 0;
+      width: 100%
+    }
+
+    .fpip {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--sur2);
+      transition: background .25s
+    }
+
+    .fpip.active {
+      background: var(--acc)
+    }
+
+    .fpip.done {
+      background: var(--green)
+    }
+
+    /* ═══ 3-D CUBE ═══════════════════════════════════════════════════
    The stage uses perspective + touch-action:none (prevents scroll).
    We do NOT call preventDefault on touchstart — this preserves
    synthetic click events on child cells for number entry.
 */
-.stage{
-  flex:1;width:100%;
-  display:flex;align-items:center;justify-content:center;
-  perspective:calc(var(--S)*3);perspective-origin:50% 48%;
-  touch-action:none;overflow:hidden;cursor:grab;
-}
-.stage:active{cursor:grabbing}
-.cube{
-  width:var(--S);height:var(--S);
-  transform-style:preserve-3d;
-  transform:matrix3d(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
-  transition:transform .48s cubic-bezier(.4,0,.2,1);
-}
-.cube.snap{transition:none}
-.face{
-  position:absolute;width:var(--S);height:var(--S);
-  border-radius:10px;overflow:hidden;
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5);
-}
-[data-f="0"]{transform:rotateX(-90deg) translateZ(var(--H))} /* Top    */
-[data-f="1"]{transform:translateZ(var(--H))}                  /* Front  */
-[data-f="2"]{transform:rotateY(-90deg) translateZ(var(--H))}  /* Right  */
-[data-f="3"]{transform:rotateY(180deg) translateZ(var(--H))}  /* Back   */
-[data-f="4"]{transform:rotateY(90deg)  translateZ(var(--H))}  /* Left   */
-[data-f="5"]{transform:rotateX(90deg)  translateZ(var(--H))}  /* Bottom */
+    .stage {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: calc(var(--S)*3);
+      perspective-origin: 50% 48%;
+      touch-action: none;
+      overflow: hidden;
+      cursor: grab;
+    }
 
-/* .fg is a plain grid container — never rotated.
+    .stage:active {
+      cursor: grabbing
+    }
+
+    .cube {
+      width: var(--S);
+      height: var(--S);
+      transform-style: preserve-3d;
+      transform: matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+      transition: transform .48s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .cube.snap {
+      transition: none
+    }
+
+    .face {
+      position: absolute;
+      width: var(--S);
+      height: var(--S);
+      border-radius: 10px;
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .45), 0 0 32px rgba(0, 0, 0, .5);
+    }
+
+    [data-f="0"] {
+      transform: rotateX(-90deg) translateZ(var(--H))
+    }
+
+    /* Top    */
+    [data-f="1"] {
+      transform: translateZ(var(--H))
+    }
+
+    /* Front  */
+    [data-f="2"] {
+      transform: rotateY(-90deg) translateZ(var(--H))
+    }
+
+    /* Right  */
+    [data-f="3"] {
+      transform: rotateY(180deg) translateZ(var(--H))
+    }
+
+    /* Back   */
+    [data-f="4"] {
+      transform: rotateY(90deg) translateZ(var(--H))
+    }
+
+    /* Left   */
+    [data-f="5"] {
+      transform: rotateX(90deg) translateZ(var(--H))
+    }
+
+    /* Bottom */
+
+    /* .fg is a plain grid container — never rotated.
    Number orientation is corrected per .cn span individually. */
-.fg{
-  width:100%;height:100%;
-  display:grid;gap:1px;padding:2px;
-  background:rgba(0,0,0,.38);
-}
-.cell{
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;user-select:none;-webkit-user-select:none;
-  position:relative; transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.cell:hover{ transform: scale(0.92); z-index:4; }
-.cell.given:hover{ transform: none; z-index:auto; }
-/* NUMBER SPAN — separate element so rotation of .fg doesn't need
+    .fg {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      gap: 1px;
+      padding: 2px;
+      background: rgba(0, 0, 0, .38);
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cell:hover {
+      transform: scale(0.92);
+      z-index: 4;
+    }
+
+    .cell.given:hover {
+      transform: none;
+      z-index: auto;
+    }
+
+    /* NUMBER SPAN — separate element so rotation of .fg doesn't need
    additional counter-rotation on text; numbers stay in grid order */
-.cn{font-weight:500;color:rgba(0,0,0,.80);font-size:inherit;line-height:1}
-.cell.given .cn{font-weight:800;color:rgba(0,0,0,.90)}
-.cell.err   .cn{color:var(--red)!important}
-.cell.sel::after{content:'';position:absolute;inset:0;border:3px solid var(--acc);pointer-events:none;z-index:2}
-.cell.hl::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.16);pointer-events:none}
-/* Box borders — stay in grid-row/col order (visual rotation via .fg transform) */
-.cell.bbt{border-top:  2.5px solid rgba(0,0,0,.48)}
-.cell.bbl{border-left: 2.5px solid rgba(0,0,0,.48)}
-.cell.edgehl::after{content:'';position:absolute;inset:0;border:2.5px dashed rgba(255,255,255,.75);pointer-events:none;z-index:3}
-.cell.given{cursor:default}
-.face.factive{box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc), 0 0 40px rgba(139, 92, 246, 0.35)}
+    .cn {
+      font-weight: 500;
+      color: rgba(0, 0, 0, .80);
+      font-size: inherit;
+      line-height: 1
+    }
 
-.wb{
-  display:none;margin:0 14px 4px;padding:10px 14px;
-  background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.22);
-  border-radius:12px;font-size:13px;font-weight:600;color:var(--green);
-  text-align:center;flex-shrink:0;
-}
-.wb button{margin-left:8px;padding:3px 10px;border:none;border-radius:6px;background:var(--green);color:#000;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit}
+    .cell.given .cn {
+      font-weight: 800;
+      color: rgba(0, 0, 0, .90)
+    }
 
-/* ═══ NUMPAD ════════════════════════════════════════════════════ */
-.npwrap{flex-shrink:0;padding:6px 12px max(10px,env(safe-area-inset-bottom));width:100%}
-.np{display:flex;gap:5px;justify-content:center;max-width:480px;margin:0 auto}
-.nk{
-  flex:1;height:56px;background:var(--sur);
-  border:1.5px solid rgba(255,255,255,0.05);border-radius:14px;
-  color:var(--tx);font-size:22px;font-weight:700;cursor:pointer;font-family:inherit;
-  transition:all .15s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-}
-.nk:hover{background:var(--sur2); transform: translateY(-2px);}
-.nk:active{transform:scale(.91);}
-.nk.lit{
-  background: linear-gradient(135deg, var(--acc), var(--acc2));
-  border-color:transparent; color:#fff; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
-}
-.nk.era{font-size:13px;font-weight:600;flex:1.4}
-</style>
+    .cell.err .cn {
+      color: var(--red) !important
+    }
+
+    .cell.sel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px solid var(--acc);
+      pointer-events: none;
+      z-index: 2
+    }
+
+    .cell.hl::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .16);
+      pointer-events: none
+    }
+
+    /* Box borders — stay in grid-row/col order (visual rotation via .fg transform) */
+    .cell.bbt {
+      border-top: 2.5px solid rgba(0, 0, 0, .48)
+    }
+
+    .cell.bbl {
+      border-left: 2.5px solid rgba(0, 0, 0, .48)
+    }
+
+    .cell.edgehl::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2.5px dashed rgba(255, 255, 255, .75);
+      pointer-events: none;
+      z-index: 3
+    }
+
+    .cell.given {
+      cursor: default
+    }
+
+    .face.factive {
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .45), 0 0 32px rgba(0, 0, 0, .5), 0 0 0 3px var(--acc), 0 0 40px rgba(139, 92, 246, 0.35)
+    }
+
+    .wb {
+      display: none;
+      margin: 0 14px 4px;
+      padding: 10px 14px;
+      background: rgba(74, 222, 128, .08);
+      border: 1px solid rgba(74, 222, 128, .22);
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .wb button {
+      margin-left: 8px;
+      padding: 3px 10px;
+      border: none;
+      border-radius: 6px;
+      background: var(--green);
+      color: #000;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: inherit
+    }
+
+    /* ═══ NUMPAD ════════════════════════════════════════════════════ */
+    .npwrap {
+      flex-shrink: 0;
+      padding: 6px 12px max(10px, env(safe-area-inset-bottom));
+      width: 100%
+    }
+
+    .np {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      max-width: 480px;
+      margin: 0 auto
+    }
+
+    .nk {
+      flex: 1;
+      height: 56px;
+      background: var(--sur);
+      border: 1.5px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      color: var(--tx);
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .15s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .nk:hover {
+      background: var(--sur2);
+      transform: translateY(-2px);
+    }
+
+    .nk:active {
+      transform: scale(.91);
+    }
+
+    .nk.lit {
+      background: linear-gradient(135deg, var(--acc), var(--acc2));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+    }
+
+    .nk.era {
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1.4
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- ══ MENU ══ -->
-<div id="menu">
-  <div class="m-logo">Sanduku</div>
-  <div class="m-tag">3 · D &nbsp; S u d o k u</div>
-  <div class="pw"><div class="pc" id="pcube"></div></div>
-  <div class="diff-list" id="dlist">
-    <div class="dcard sel" data-key="beginner">
-      <div class="dgrid" id="ig-beginner" style="grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)"></div>
-      <div><div class="dname">Beginner</div><div class="ddesc">4 × 4 · lots of clues</div></div>
-      <div class="dradio"></div>
+  <!-- ══ MENU ══ -->
+  <div id="menu">
+    <div class="m-logo">Sanduku</div>
+    <div class="m-tag">3 · D &nbsp; S u d o k u</div>
+    <div class="pw">
+      <div class="pc" id="pcube"></div>
     </div>
-    <div class="dcard" data-key="easy">
-      <div class="dgrid" id="ig-easy" style="grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)"></div>
-      <div><div class="dname">Easy</div><div class="ddesc">4 × 4 · fewer clues</div></div>
-      <div class="dradio"></div>
+    <div class="diff-list" id="dlist">
+      <div class="dcard sel" data-key="beginner">
+        <div class="dgrid" id="ig-beginner"
+          style="grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)"></div>
+        <div>
+          <div class="dname">Beginner</div>
+          <div class="ddesc">4 × 4 · lots of clues</div>
+        </div>
+        <div class="dradio"></div>
+      </div>
+      <div class="dcard" data-key="easy">
+        <div class="dgrid" id="ig-easy" style="grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr)">
+        </div>
+        <div>
+          <div class="dname">Easy</div>
+          <div class="ddesc">4 × 4 · fewer clues</div>
+        </div>
+        <div class="dradio"></div>
+      </div>
+      <div class="dcard" data-key="medium">
+        <div class="dgrid" id="ig-medium" style="grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)">
+        </div>
+        <div>
+          <div class="dname">Medium</div>
+          <div class="ddesc">9 × 9 · standard Sudoku</div>
+        </div>
+        <div class="dradio"></div>
+      </div>
+      <div class="dcard" data-key="hard">
+        <div class="dgrid" id="ig-hard" style="grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)">
+        </div>
+        <div>
+          <div class="dname">Hard</div>
+          <div class="ddesc">9 × 9 · minimal clues</div>
+        </div>
+        <div class="dradio"></div>
+      </div>
     </div>
-    <div class="dcard" data-key="medium">
-      <div class="dgrid" id="ig-medium" style="grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)"></div>
-      <div><div class="dname">Medium</div><div class="ddesc">9 × 9 · standard Sudoku</div></div>
-      <div class="dradio"></div>
+    <button class="play-btn" id="playbtn">Play →</button>
+  </div>
+
+  <!-- ══ GAME ══ -->
+  <div id="game">
+    <div class="gh">
+      <button class="back-btn" id="backbtn">←</button>
+      <span class="gtitle">Sanduku</span>
+      <span class="spip" id="spip">Outer shell</span>
+      <button class="hbtn" id="hintbtn">Hint</button>
     </div>
-    <div class="dcard" data-key="hard">
-      <div class="dgrid" id="ig-hard" style="grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)"></div>
-      <div><div class="dname">Hard</div><div class="ddesc">9 × 9 · minimal clues</div></div>
-      <div class="dradio"></div>
+    <div class="fprog" id="fprog"></div>
+    <div class="stage" id="stage">
+      <div class="cube" id="cube">
+        <div class="face" data-f="0">
+          <div class="fg" id="fg0"></div>
+        </div>
+        <div class="face" data-f="1">
+          <div class="fg" id="fg1"></div>
+        </div>
+        <div class="face" data-f="2">
+          <div class="fg" id="fg2"></div>
+        </div>
+        <div class="face" data-f="3">
+          <div class="fg" id="fg3"></div>
+        </div>
+        <div class="face" data-f="4">
+          <div class="fg" id="fg4"></div>
+        </div>
+        <div class="face" data-f="5">
+          <div class="fg" id="fg5"></div>
+        </div>
+      </div>
+    </div>
+    <div class="wb" id="wb"></div>
+    <div class="npwrap">
+      <div class="np" id="np"></div>
     </div>
   </div>
-  <button class="play-btn" id="playbtn">Play →</button>
-</div>
 
-<!-- ══ GAME ══ -->
-<div id="game">
-  <div class="gh">
-    <button class="back-btn" id="backbtn">←</button>
-    <span class="gtitle">Sanduku</span>
-    <span class="spip" id="spip">Outer shell</span>
-    <button class="hbtn" id="hintbtn">Hint</button>
-  </div>
-  <div class="fprog" id="fprog"></div>
-  <div class="stage" id="stage">
-    <div class="cube" id="cube">
-      <div class="face" data-f="0"><div class="fg" id="fg0"></div></div>
-      <div class="face" data-f="1"><div class="fg" id="fg1"></div></div>
-      <div class="face" data-f="2"><div class="fg" id="fg2"></div></div>
-      <div class="face" data-f="3"><div class="fg" id="fg3"></div></div>
-      <div class="face" data-f="4"><div class="fg" id="fg4"></div></div>
-      <div class="face" data-f="5"><div class="fg" id="fg5"></div></div>
-    </div>
-  </div>
-  <div class="wb" id="wb"></div>
-  <div class="npwrap"><div class="np" id="np"></div></div>
-</div>
+  <script>
+    'use strict';
 
-<script>
-'use strict';
+    // ═══════════════════════════════════════════════════════════════
+    // 3×3 ROTATION MATRIX ENGINE
+    // Tracks cube orientation as an integer matrix — no Euler angles,
+    // no gimbal lock, no accumulated drift, unlimited rotation.
+    //
+    // Swipe conventions (applied on the LEFT = viewer-space rotation):
+    //   L → Ry(-90°): right face comes forward
+    //   R → Ry(+90°): left face comes forward
+    //   U → Rx(+90°): top face comes forward
+    //   D → Rx(-90°): bottom face comes forward
+    // ═══════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════════
-// 3×3 ROTATION MATRIX ENGINE
-// Tracks cube orientation as an integer matrix — no Euler angles,
-// no gimbal lock, no accumulated drift, unlimited rotation.
-//
-// Swipe conventions (applied on the LEFT = viewer-space rotation):
-//   L → Ry(-90°): right face comes forward
-//   R → Ry(+90°): left face comes forward
-//   U → Rx(+90°): top face comes forward
-//   D → Rx(-90°): bottom face comes forward
-// ═══════════════════════════════════════════════════════════════
-
-function mul3(A,B){
-  const C=[[0,0,0],[0,0,0],[0,0,0]];
-  for(let i=0;i<3;i++) for(let j=0;j<3;j++) for(let k=0;k<3;k++) C[i][j]+=A[i][k]*B[k][j];
-  return C;
-}
-const snap3 = M => M.map(r=>r.map(v=>Math.round(v)));
-
-// CSS matrix3d is column-major
-const toCss = M =>
-  `matrix3d(${M[0][0]},${M[1][0]},${M[2][0]},0,`+
-            `${M[0][1]},${M[1][1]},${M[2][1]},0,`+
-            `${M[0][2]},${M[1][2]},${M[2][2]},0,`+
-            `0,0,0,1)`;
-
-// Which face is facing +Z (toward viewer)?
-// Face normals in cube-local space: Top=(0,1,0) Front=(0,0,1) Right=(1,0,0)
-//   Back=(0,0,-1) Left=(-1,0,0) Bottom=(0,-1,0)
-// viewer_score[fi] = M_row2 · face_normal[fi]
-function facingFace(M){
-  const r=M[2];
-  const s=[r[1],r[2],r[0],-r[2],-r[0],-r[1]]; // [Top,Front,Right,Back,Left,Bottom]
-  return s.indexOf(Math.max(...s));
-}
-
-const ROT={
-  L:[[0,0,-1],[0,1,0],[1,0,0]],  // Ry(-90°)
-  R:[[0,0,1],[0,1,0],[-1,0,0]],  // Ry(+90°)
-  U:[[1,0,0],[0,0,-1],[0,1,0]],  // Rx(+90°)
-  D:[[1,0,0],[0,0,1],[0,-1,0]],  // Rx(-90°)
-};
-
-let cubeM=[[1,0,0],[0,1,0],[0,0,1]]; // identity = Front facing viewer
-
-const cubeEl=document.getElementById('cube');
-function applyCube(anim){
-  if(!anim){cubeEl.classList.add('snap');void cubeEl.offsetWidth;}
-  cubeEl.style.transform=toCss(cubeM);
-  if(!anim){void cubeEl.offsetWidth;cubeEl.classList.remove('snap');}
-}
-
-// ═══════════════════════════════════════════════════════════════
-// FACE CONTENT ROTATION
-// Each face has a fixed position transform on the cube.
-// After that transform, the face's CSS visual "up" (0,-1,0 in local)
-// maps to a specific direction in cube-space (FACE_UP_CUBE).
-// When the cube's matrix M is applied, viewer_up = M * face_up.
-// If viewer_up ≠ (0,-1,0), the content appears tilted; we apply a
-// counter-rotation to .fg to keep numbers readable.
-//
-// (0,-1,0) in local CSS after each face's own transform:
-//   Top   rotateX(-90°):  y(0,-1,0)→(0,0,1)
-//   Front identity:       y stays (0,-1,0)
-//   Right rotateY(-90°):  y unchanged (0,-1,0)
-//   Back  rotateY(180°):  y unchanged (0,-1,0)
-//   Left  rotateY(90°):   y unchanged (0,-1,0)
-//   Bottom rotateX(90°):  y(0,-1,0)→(0,0,-1)
-// ═══════════════════════════════════════════════════════════════
-
-const FACE_UP_CUBE=[
-  [0,0,1],[0,-1,0],[0,-1,0],[0,-1,0],[0,-1,0],[0,0,-1]
-];
-
-function faceContentRot(fi){
-  const u=FACE_UP_CUBE[fi];
-  // viewer_up = M * u  (M is row-major: result[i] = sum_j M[i][j]*u[j])
-  const vu=[
-    cubeM[0][0]*u[0]+cubeM[0][1]*u[1]+cubeM[0][2]*u[2],
-    cubeM[1][0]*u[0]+cubeM[1][1]*u[1]+cubeM[1][2]*u[2],
-    cubeM[2][0]*u[0]+cubeM[2][1]*u[1]+cubeM[2][2]*u[2],
-  ];
-  if(vu[1]<-0.5) return 0;    // (0,-1,0) → upright
-  if(vu[0]> 0.5) return -90;  // (1, 0,0) → rotated CW, correct CCW
-  if(vu[1]> 0.5) return 180;  // (0, 1,0) → upside down
-  if(vu[0]<-0.5) return 90;   // (-1,0,0) → rotated CCW, correct CW
-  return 0;
-}
-
-// Apply correct rotation to the number spans on all 6 face grids.
-// Rotate only .cn text — never .fg — so grid layout stays visually correct.
-function updateFaceRots(){
-  for(let fi=0;fi<6;fi++){
-    const fg=document.getElementById(`fg${fi}`);
-    if(fg){
-      const t=faceContentRot(fi);
-      const ts=t?`rotate(${t}deg)`:'';
-      fg.querySelectorAll('.cn').forEach(cn=>{cn.style.transform=ts;});
+    function mul3(A, B) {
+      const C = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) C[i][j] += A[i][k] * B[k][j];
+      return C;
     }
-  }
-}
+    const snap3 = M => M.map(r => r.map(v => Math.round(v)));
 
+    // CSS matrix3d is column-major
+    const toCss = M =>
+      `matrix3d(${M[0][0]},${M[1][0]},${M[2][0]},0,` +
+      `${M[0][1]},${M[1][1]},${M[2][1]},0,` +
+      `${M[0][2]},${M[1][2]},${M[2][2]},0,` +
+      `0,0,0,1)`;
 
-// ═══════════════════════════════════════════════════════════════
-// COLOUR SYSTEM — per face, per box
-//
-// Each face has its own hue. FACE_BOX_COLS[face] has 9 entries.
-// For 4×4 (2×2 boxes per face): use indices [0,2,6,8] (corners).
-// For 9×9 (3×3 boxes per face): use indices [0..8] linearly.
-// Zero geometry needed — can never be wrong.
-// ═══════════════════════════════════════════════════════════════
-const FACE_BOX_COLS=[
-  // 0 Top — blue
-  ['#e8f0ff','#d4e4ff','#c0d8ff',
-   '#ccdcf8','#b8d0f2','#a4c4ec',
-   '#b8ccf0','#a4c0ea','#90b4e4'],
-  // 1 Front — amber/honey
-  ['#fff8e4','#ffefcc','#ffe6b4',
-   '#fde09a','#fbd780','#f9ce66',
-   '#f6c04c','#f4b732','#f2ae18'],
-  // 2 Right — sage green
-  ['#e4f6e4','#ccedc8','#b4e4ac',
-   '#b8e4b0','#a0db98','#88d280',
-   '#a0dca0','#88d388','#70ca70'],
-  // 3 Back — lavender
-  ['#f4eeff','#e6ddff','#d8ccff',
-   '#e0ccfe','#d2bbf8','#c4aaf2',
-   '#d0aaee','#c299e8','#b488e2'],
-  // 4 Left — teal
-  ['#e4f6f4','#ccecea','#b4e2e0',
-   '#b8e2de','#a0d8d4','#88ceca',
-   '#a0dcd8','#88d2ce','#70c8c4'],
-  // 5 Bottom — rose
-  ['#fff0f4','#ffdde4','#ffcad4',
-   '#ffc8d0','#ffb5bc','#ffa2a8',
-   '#ffb4c0','#ffa1ac','#ff8e98'],
-];
-
-const BX={4:{r:2,c:2},9:{r:3,c:3}};
-
-// Return the background colour for a cell given face, box-row, box-col, and N.
-// For 4×4 (2×2 boxes): map (bR,bC) to corners of the 9-slot palette [0,2,6,8].
-// For 9×9 (3×3 boxes): map linearly [0..8].
-function boxColor(face,bR,bC,N){
-  const idx=N===4 ? bR*6+bC*2 : bR*3+bC;
-  return FACE_BOX_COLS[face][idx];
-}
-
-// ═══════════════════════════════════════════════════════════════
-// EDGE HELPERS + SUDOKU SOLVER
-// ═══════════════════════════════════════════════════════════════
-
-const getE=(g,N,e)=>{
-  if(e==='top')    return g.slice(0,N);
-  if(e==='bottom') return g.slice((N-1)*N);
-  if(e==='left')   return Array.from({length:N},(_,i)=>g[i*N]);
-  if(e==='right')  return Array.from({length:N},(_,i)=>g[i*N+N-1]);
-};
-const setE=(g,N,e,v)=>{
-  if(e==='top')    v.forEach((x,i)=>{if(!g[i])        g[i]=x;});
-  if(e==='bottom') v.forEach((x,i)=>{if(!g[(N-1)*N+i])g[(N-1)*N+i]=x;});
-  if(e==='left')   v.forEach((x,i)=>{if(!g[i*N])      g[i*N]=x;});
-  if(e==='right')  v.forEach((x,i)=>{if(!g[i*N+N-1])  g[i*N+N-1]=x;});
-};
-const rev=a=>[...a].reverse();
-
-function shuf(a){
-  for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}
-  return a;
-}
-
-function solveSudoku(grid,N){
-  // MRV (Minimum Remaining Values): always pick the empty cell with the
-  // fewest valid choices. This dramatically reduces backtracking for
-  // constrained faces (especially Back face with all 4 edges set).
-  const {r:br,c:bc}=BX[N],g=[...grid];
-  const getValid=(i)=>{
-    const r=(i/N)|0,c=i%N;
-    let mask=0;
-    for(let k=0;k<N;k++){mask|=(1<<g[r*N+k]);mask|=(1<<g[k*N+c]);}
-    const r0=((r/br)|0)*br,c0=((c/bc)|0)*bc;
-    for(let dr=0;dr<br;dr++) for(let dc=0;dc<bc;dc++) mask|=(1<<g[(r0+dr)*N+(c0+dc)]);
-    const v=[];for(let n=1;n<=N;n++) if(!(mask&(1<<n))) v.push(n);
-    return v;
-  };
-  const go=()=>{
-    let minLen=N+1,minCell=-1,minValid=null;
-    for(let i=0;i<N*N;i++){
-      if(g[i]) continue;
-      const v=getValid(i);
-      if(v.length===0) return false; // dead end — backtrack immediately
-      if(v.length<minLen){minLen=v.length;minCell=i;minValid=v;if(minLen===1)break;}
-    }
-    if(minCell===-1) return true; // all cells filled
-    for(const v of shuf(minValid)){g[minCell]=v;if(go())return true;g[minCell]=0;}
-    return false;
-  };
-  return go()?g:null;
-}
-
-function hasConflict(g,N){
-  const {r:br,c:bc}=BX[N];
-  for(let i=0;i<N*N;i++){
-    const v=g[i];if(!v)continue;
-    const r=(i/N)|0,c=i%N;
-    for(let k=0;k<N;k++){if(k!==c&&g[r*N+k]===v)return true;if(k!==r&&g[k*N+c]===v)return true;}
-    const r0=((r/br)|0)*br,c0=((c/bc)|0)*bc;
-    for(let dr=0;dr<br;dr++) for(let dc=0;dc<bc;dc++){const j=(r0+dr)*N+(c0+dc);if(j!==i&&g[j]===v)return true;}
-  }
-  return false;
-}
-
-// Verify all 12 cube edges match between solved faces
-// Verify all 12 cube edges match between solved faces.
-// Top:    row0=FRONT, rowN=BACK,  col0=LEFT, colN=RIGHT  (CSS rotateX(-90°))
-// Bottom: row0=BACK,  rowN=FRONT, col0=LEFT, colN=RIGHT  (CSS rotateX(+90°))
-// Right:  col0=FRONT, colN=BACK   Left: col0=BACK, colN=FRONT
-// Back:   col0=cube-RIGHT, colN=cube-LEFT
-function edgesOK(s,N){
-  const check=(a,b)=>a.every((v,i)=>v===b[i]);
-  return (
-    // Top–side edges
-    check(getE(s[0],N,'top'),       getE(s[1],N,'top'))      &&  // Top.top(FRONT)==Front.top
-    check(getE(s[0],N,'right'),     getE(s[2],N,'top'))      &&  // Top.right F→B==Right.top F→B
-    check(rev(getE(s[0],N,'left')), getE(s[4],N,'top'))      &&  // rev(Top.left)==Left.top
-    check(rev(getE(s[0],N,'bottom')),getE(s[3],N,'top'))     &&  // rev(Top.bottom)==Back.top
-    // Side–side edges (unchanged)
-    check(getE(s[1],N,'right'),     getE(s[2],N,'left'))     &&
-    check(getE(s[2],N,'right'),     getE(s[3],N,'left'))     &&
-    check(getE(s[3],N,'right'),     getE(s[4],N,'left'))     &&
-    check(getE(s[4],N,'right'),     getE(s[1],N,'left'))     &&
-    // Bottom–side edges
-    check(getE(s[1],N,'bottom'),    getE(s[5],N,'bottom'))   &&  // Front.bottom==Bottom.bottom(FRONT)
-    check(rev(getE(s[2],N,'bottom')),getE(s[5],N,'right'))   &&  // rev(Right.bottom)==Bottom.right
-    check(rev(getE(s[3],N,'bottom')),getE(s[5],N,'top'))     &&  // rev(Back.bottom)==Bottom.top(BACK)
-    check(getE(s[4],N,'bottom'),    getE(s[5],N,'left'))         // Left.bottom==Bottom.left
-  );
-}
-
-async function genCube(N){
-  // Async: yields the UI thread every 10 attempts so the browser stays
-  // responsive. Outer while-loop replaces old tail-recursion (which
-  // could stack-overflow if many restarts were needed).
-  const MAX=N===9?600:120;
-  const yield_=()=>new Promise(r=>setTimeout(r,0));
-  while(true){
-    for(let attempt=0;attempt<MAX;attempt++){
-      if(attempt%10===0||N===9)await yield_();
-      const s=Array(6).fill(null);
-      s[1]=solveSudoku(Array(N*N).fill(0),N);if(!s[1])continue;
-      // Top: top(FRONT edge)==Front.top
-      {const g=Array(N*N).fill(0);setE(g,N,'top',getE(s[1],N,'top'));
-       s[0]=solveSudoku(g,N);if(!s[0])continue;}
-      // Right: left==Front.right, top==Top.right (no rev)
-      {const g=Array(N*N).fill(0);
-       setE(g,N,'left',getE(s[1],N,'right'));
-       setE(g,N,'top',getE(s[0],N,'right'));
-       if(hasConflict(g,N))continue;s[2]=solveSudoku(g,N);if(!s[2])continue;}
-      // Left: right==Front.left, top==rev(Top.left)
-      {const g=Array(N*N).fill(0);
-       setE(g,N,'right',getE(s[1],N,'left'));
-       setE(g,N,'top',rev(getE(s[0],N,'left')));
-       if(hasConflict(g,N))continue;s[4]=solveSudoku(g,N);if(!s[4])continue;}
-      // Bottom
-      {const g=Array(N*N).fill(0);
-       setE(g,N,'bottom',getE(s[1],N,'bottom'));
-       setE(g,N,'right',rev(getE(s[2],N,'bottom')));
-       setE(g,N,'left',getE(s[4],N,'bottom'));
-       if(hasConflict(g,N))continue;s[5]=solveSudoku(g,N);if(!s[5])continue;}
-      // Back: all 4 edges constrained
-      {const g=Array(N*N).fill(0);
-       setE(g,N,'top',  rev(getE(s[0],N,'bottom')));
-       setE(g,N,'left', getE(s[2],N,'right'));
-       setE(g,N,'right',getE(s[4],N,'left'));
-       setE(g,N,'bottom',rev(getE(s[5],N,'top')));
-       if(hasConflict(g,N))continue;s[3]=solveSudoku(g,N);if(!s[3])continue;}
-      if(edgesOK(s,N)) return s;
-    }
-    console.warn('genCube: exhausted '+MAX+' attempts, restarting');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// EDGE CELL LINKING
-// Maps every non-corner edge cell to its counterpart on the adjacent face.
-// Corner cells (where 3 faces meet) are intentionally skipped — they sit
-// on two edges simultaneously, creating triangular ambiguity with no clean
-// symmetric pair. Non-corner edge cells each have exactly one partner.
-// ═══════════════════════════════════════════════════════════════
-function getLinkedEdgeCell(face,i,N){
-  const row=(i/N)|0,col=i%N;
-  // Corner cells → skip
-  if((row===0||row===N-1)&&(col===0||col===N-1))return null;
-  const idx=(r,c)=>r*N+c;
-  switch(face){
-    case 1: // FRONT
-      if(row===0)   return{face:0,index:idx(0,col)};           // Top.top
-      if(row===N-1) return{face:5,index:idx(N-1,col)};         // Bottom.bottom
-      if(col===0)   return{face:4,index:idx(row,N-1)};         // Left.right
-      if(col===N-1) return{face:2,index:idx(row,0)};           // Right.left
-      break;
-    case 0: // TOP  row0=FRONT
-      if(row===0)   return{face:1,index:idx(0,col)};           // Front.top
-      if(row===N-1) return{face:3,index:idx(0,N-1-col)};       // Back.top (rev)
-      if(col===0)   return{face:4,index:idx(0,N-1-row)};       // Left.top (rev)
-      if(col===N-1) return{face:2,index:idx(0,row)};           // Right.top
-      break;
-    case 5: // BOTTOM  row0=BACK
-      if(row===0)   return{face:3,index:idx(N-1,N-1-col)};     // Back.bottom (rev)
-      if(row===N-1) return{face:1,index:idx(N-1,col)};         // Front.bottom
-      if(col===0)   return{face:4,index:idx(N-1,row)};         // Left.bottom
-      if(col===N-1) return{face:2,index:idx(N-1,N-1-row)};     // Right.bottom (rev)
-      break;
-    case 2: // RIGHT  col0=FRONT
-      if(col===0)   return{face:1,index:idx(row,N-1)};         // Front.right
-      if(col===N-1) return{face:3,index:idx(row,0)};           // Back.left
-      if(row===0)   return{face:0,index:idx(col,N-1)};         // Top.right
-      if(row===N-1) return{face:5,index:idx(N-1-col,N-1)};     // Bottom.right (rev)
-      break;
-    case 4: // LEFT  col0=BACK
-      if(col===0)   return{face:3,index:idx(row,N-1)};         // Back.right
-      if(col===N-1) return{face:1,index:idx(row,0)};           // Front.left
-      if(row===0)   return{face:0,index:idx(N-1-col,0)};       // Top.left (rev)
-      if(row===N-1) return{face:5,index:idx(col,0)};           // Bottom.left
-      break;
-    case 3: // BACK  col0=cube-RIGHT
-      if(row===0)   return{face:0,index:idx(N-1,N-1-col)};     // Top.bottom (rev)
-      if(row===N-1) return{face:5,index:idx(0,N-1-col)};       // Bottom.top (rev)
-      if(col===0)   return{face:2,index:idx(row,N-1)};         // Right.right
-      if(col===N-1) return{face:4,index:idx(row,0)};           // Left.left
-      break;
-  }
-  return null;
-}
-
-// Highlight the active face and lock pointer-events on all others.
-// pointer-events:none must be set on BOTH the .face div AND the .fg grid —
-// cells alone are not enough: the .fg background still absorbs clicks, and
-// overflow:hidden does NOT clip 3D-transformed children for pointer events.
-// Additionally, we dynamically toggle backface-visibility to visible on
-// the active face. This prevents the browser compositor from mistakenly
-// categorizing rotated active faces as back-facing, which would otherwise drop inputs.
-function updateActiveFaceUI(){
-  document.querySelectorAll('.face').forEach((el,i)=>{
-    const active=(i===G.f);
-    el.classList.toggle('factive',active);
-    el.style.pointerEvents=active?'':'none';
-    el.style.backfaceVisibility=active?'visible':'hidden';
-    el.style.webkitBackfaceVisibility=active?'visible':'hidden';
-    const fg=el.querySelector('.fg');
-    if(fg) fg.style.pointerEvents=active?'':'none';
-  });
-}
-
-function mkFaces(N,sols,givens){
-  const faces=sols.map(sol=>{
-    const puz=Array(N*N).fill(0);
-    shuf([...Array(N*N).keys()]).slice(0,givens).forEach(i=>puz[i]=sol[i]);
-    return{sol,puz,usr:Array(N*N).fill(0),gvn:puz.map(v=>v>0)};
-  });
-  // Pre-populate linked cells: if a given sits on an edge, mirror its value
-  // to the adjacent face's matching cell (as a soft pre-fill, not a given).
-  faces.forEach((fc,fi)=>{
-    fc.gvn.forEach((isGiven,i)=>{
-      if(!isGiven)return;
-      const linked=getLinkedEdgeCell(fi,i,N);
-      if(!linked)return;
-      const lfc=faces[linked.face];
-      if(!lfc.gvn[linked.index]&&!lfc.usr[linked.index]){
-        lfc.usr[linked.index]=fc.puz[i];
-      }
-    });
-  });
-  return faces;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DIFFICULTY MODES
-// ═══════════════════════════════════════════════════════════════
-const MODES={
-  beginner:{N:4,givens:11,innerGivens:6},
-  easy:    {N:4,givens:7, innerGivens:3},
-  medium:  {N:9,givens:38,innerGivens:26},
-  hard:    {N:9,givens:25,innerGivens:17},
-};
-
-// ═══════════════════════════════════════════════════════════════
-// GAME STATE
-// ═══════════════════════════════════════════════════════════════
-let G={};
-let busy=false,lit=null,swipeToken=0;
-
-async function startGame(key){
-  const mode=MODES[key];
-  document.getElementById('menu').classList.add('gone');
-  document.getElementById('game').classList.add('show');
-  cubeM=[[1,0,0],[0,1,0],[0,0,1]];
-  applyCube(false);
-  G={N:mode.N,key,f:1,sel:null,shell:'outer',faces:null,ifaces:null,innerGivens:mode.innerGivens};
-  document.getElementById('spip').textContent='Outer shell';
-  document.getElementById('spip').className='spip';
-  document.getElementById('wb').style.display='none';
-  lit=null;busy=true;++swipeToken; // busy=true blocks input while generating
-  // Clear old puzzle content and reset cube to blank BEFORE generation starts
-  for(let i=0;i<6;i++){const fg=document.getElementById('fg'+i);if(fg)fg.innerHTML='';}
-  // Show a loading indicator while the puzzle is being generated
-  const fprog=document.getElementById('fprog');
-  fprog.innerHTML='<div class="gen-loading">Generating puzzle…</div>';
-  document.getElementById('hintbtn').disabled=true;
-  await new Promise(r=>setTimeout(r,0)); // let the browser paint before blocking
-  G.faces=mkFaces(mode.N,await genCube(mode.N),mode.givens);
-  busy=false;
-  document.getElementById('hintbtn').disabled=false;
-  renderAll();
-  updateFaceRots();
-  updateActiveFaceUI();
-}
-
-async function enterInner(){
-  // Fade out, rebuild, fade back in — never touch the matrix3d transform
-  const cubeEl2=document.getElementById('cube');
-  cubeEl2.style.transition='opacity 0.35s ease';
-  cubeEl2.style.opacity='0';
-  await new Promise(r=>setTimeout(r,350));
-  G.shell='inner';G.f=1;G.sel=null;lit=null;
-  cubeM=[[1,0,0],[0,1,0],[0,0,1]];applyCube(false);
-  document.getElementById('spip').textContent='Inner shell';
-  document.getElementById('spip').className='spip inner';
-  document.getElementById('wb').style.display='none';
-  document.getElementById('hintbtn').disabled=true;
-  const fprog=document.getElementById('fprog');
-  fprog.innerHTML='<div class="gen-loading">Generating inner shell…</div>';
-  G.ifaces=mkFaces(G.N,await genCube(G.N),G.innerGivens);
-  document.getElementById('hintbtn').disabled=false;
-  renderAll();updateActiveFaceUI();
-  cubeEl2.style.opacity='1';
-  setTimeout(()=>{cubeEl2.style.transition='';},400);
-}
-
-const aFs=()=>G.shell==='inner'?G.ifaces:G.faces;
-const cv=(f,i)=>{const fc=aFs()[f];return fc.gvn[i]?fc.puz[i]:fc.usr[i]||0;};
-
-function cellOK(f,i,v){
-  const N=G.N,{r:br,c:bc}=BX[N],row=(i/N)|0,col=i%N;
-  for(let k=0;k<N;k++){if(k!==col&&cv(f,row*N+k)===v)return false;if(k!==row&&cv(f,k*N+col)===v)return false;}
-  const r0=((row/br)|0)*br,c0=((col/bc)|0)*bc;
-  for(let dr=0;dr<br;dr++) for(let dc=0;dc<bc;dc++){const j=(r0+dr)*N+(c0+dc);if(j!==i&&cv(f,j)===v)return false;}
-  // 3D edge constraint: the paired cell on the adjacent face must match (if filled)
-  const linked=getLinkedEdgeCell(f,i,N);
-  if(linked){const other=cv(linked.face,linked.index);if(other&&other!==v)return false;}
-  return true;
-}
-
-function faceDone(f){const fc=aFs()[f];return fc&&fc.sol.every((_,i)=>cv(f,i)===fc.sol[i]);}
-
-function checkWin(){
-  if(![0,1,2,3,4,5].every(f=>faceDone(f)))return;
-  const wb=document.getElementById('wb');
-  if(G.shell==='outer'){
-    wb.innerHTML='Outer shell complete! <button onclick="enterInner()">Inner shell →</button>';
-  }else{
-    wb.textContent='🎉 Sanduku solved! Both shells complete!';
-  }
-  wb.style.display='block';
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RENDERING
-// ═══════════════════════════════════════════════════════════════
-function renderFace(fi,active){
-  const N=G.N,fc=aFs()[fi],fg=document.getElementById(`fg${fi}`);
-  fg.innerHTML='';
-  if(!fc)return;
-  const {r:br,c:bc}=BX[N];
-  const S=Math.min(window.innerWidth*.88,420);
-  const fs=Math.max(10,Math.floor(S/(N*2.8)));
-
-  fg.style.gridTemplateColumns=`repeat(${N},1fr)`;
-  fg.style.gridTemplateRows=`repeat(${N},1fr)`;
-
-  for(let i=0;i<N*N;i++){
-    const cell=document.createElement('div');
-    cell.className='cell';
-    const row=(i/N)|0,col=i%N;
-    const bR=(row/br)|0,bC=(col/bc)|0;
-    cell.style.cssText=`font-size:${fs}px;background-color:${boxColor(fi,bR,bC,N)}`;
-    if(row>0&&row%br===0) cell.classList.add('bbt');
-    if(col>0&&col%bc===0) cell.classList.add('bbl');
-
-    const v=cv(fi,i);
-    if(v){
-      const cn=document.createElement('span');cn.className='cn';cn.textContent=v;
-      const rot=faceContentRot(fi);if(rot)cn.style.transform=`rotate(${rot}deg)`;
-      if(!fc.gvn[i]&&!cellOK(fi,i,v)) cn.style.color='var(--red)';
-      cell.appendChild(cn);
+    // Which face is facing +Z (toward viewer)?
+    // Face normals in cube-local space: Top=(0,1,0) Front=(0,0,1) Right=(1,0,0)
+    //   Back=(0,0,-1) Left=(-1,0,0) Bottom=(0,-1,0)
+    // viewer_score[fi] = M_row2 · face_normal[fi]
+    function facingFace(M) {
+      const r = M[2];
+      const s = [r[1], r[2], r[0], -r[2], -r[0], -r[1]]; // [Top,Front,Right,Back,Left,Bottom]
+      return s.indexOf(Math.max(...s));
     }
 
-    if(fc.gvn[i]){
-      cell.classList.add('given');
-    }else{
-      // Visual sel/hl — only when this face was rendered as active
-      if(active){
-        if(G.sel===i) cell.classList.add('sel');
-        else if(G.sel!==null){
-          const sr=(G.sel/N)|0,sc=G.sel%N;
-          const sameBox=((sr/br)|0)===((row/br)|0)&&((sc/bc)|0)===((col/bc)|0);
-          if(sr===row||sc===col||sameBox) cell.classList.add('hl');
+    const ROT = {
+      L: [[0, 0, -1], [0, 1, 0], [1, 0, 0]],  // Ry(-90°)
+      R: [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],  // Ry(+90°)
+      U: [[1, 0, 0], [0, 0, -1], [0, 1, 0]],  // Rx(+90°)
+      D: [[1, 0, 0], [0, 0, 1], [0, -1, 0]],  // Rx(-90°)
+    };
+
+    let cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; // identity = Front facing viewer
+
+    const cubeEl = document.getElementById('cube');
+    function applyCube(anim) {
+      if (!anim) { cubeEl.classList.add('snap'); void cubeEl.offsetWidth; }
+      cubeEl.style.transform = toCss(cubeM);
+      if (!anim) { void cubeEl.offsetWidth; cubeEl.classList.remove('snap'); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FACE CONTENT ROTATION
+    // Each face has a fixed position transform on the cube.
+    // After that transform, the face's CSS visual "up" (0,-1,0 in local)
+    // maps to a specific direction in cube-space (FACE_UP_CUBE).
+    // When the cube's matrix M is applied, viewer_up = M * face_up.
+    // If viewer_up ≠ (0,-1,0), the content appears tilted; we apply a
+    // counter-rotation to .fg to keep numbers readable.
+    //
+    // (0,-1,0) in local CSS after each face's own transform:
+    //   Top   rotateX(-90°):  y(0,-1,0)→(0,0,1)
+    //   Front identity:       y stays (0,-1,0)
+    //   Right rotateY(-90°):  y unchanged (0,-1,0)
+    //   Back  rotateY(180°):  y unchanged (0,-1,0)
+    //   Left  rotateY(90°):   y unchanged (0,-1,0)
+    //   Bottom rotateX(90°):  y(0,-1,0)→(0,0,-1)
+    // ═══════════════════════════════════════════════════════════════
+
+    const FACE_UP_CUBE = [
+      [0, 0, 1], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 0, -1]
+    ];
+
+    function faceContentRot(fi) {
+      const u = FACE_UP_CUBE[fi];
+      // viewer_up = M * u  (M is row-major: result[i] = sum_j M[i][j]*u[j])
+      const vu = [
+        cubeM[0][0] * u[0] + cubeM[0][1] * u[1] + cubeM[0][2] * u[2],
+        cubeM[1][0] * u[0] + cubeM[1][1] * u[1] + cubeM[1][2] * u[2],
+        cubeM[2][0] * u[0] + cubeM[2][1] * u[1] + cubeM[2][2] * u[2],
+      ];
+      if (vu[1] < -0.5) return 0;    // (0,-1,0) → upright
+      if (vu[0] > 0.5) return -90;  // (1, 0,0) → rotated CW, correct CCW
+      if (vu[1] > 0.5) return 180;  // (0, 1,0) → upside down
+      if (vu[0] < -0.5) return 90;   // (-1,0,0) → rotated CCW, correct CW
+      return 0;
+    }
+
+    // Apply correct rotation to the number spans on all 6 face grids.
+    // Rotate only .cn text — never .fg — so grid layout stays visually correct.
+    function updateFaceRots() {
+      for (let fi = 0; fi < 6; fi++) {
+        const fg = document.getElementById(`fg${fi}`);
+        if (fg) {
+          const t = faceContentRot(fi);
+          const ts = t ? `rotate(${t}deg)` : '';
+          fg.querySelectorAll('.cn').forEach(cn => { cn.style.transform = ts; });
         }
       }
-      // Normal cell click event. The active face will receive pointer events directly
-      // because backface-visibility is explicitly set to visible for it.
-      const idx=i,faceIdx=fi;
-      cell.addEventListener('click',()=>{
-        if(busy||G.f!==faceIdx)return;
-        if(lit!==null){G.sel=idx;enterNum(lit);return;}
-        G.sel=(G.sel===idx)?null:idx;
-        renderFace(G.f,true);
-      });
     }
-    // Edge-cell hover: highlight the counterpart on the adjacent face
-    const linked=getLinkedEdgeCell(fi,i,N);
-    if(linked){
-      cell.addEventListener('mouseenter',()=>{
-        const tfg=document.getElementById(`fg${linked.face}`);
-        if(tfg) tfg.children[linked.index]?.classList.add('edgehl');
-      });
-      cell.addEventListener('mouseleave',()=>{
-        const tfg=document.getElementById(`fg${linked.face}`);
-        if(tfg) tfg.children[linked.index]?.classList.remove('edgehl');
-      });
+
+
+    // ═══════════════════════════════════════════════════════════════
+    // COLOUR SYSTEM — per face, per box
+    //
+    // Each face has its own hue. FACE_BOX_COLS[face] has 9 entries.
+    // For 4×4 (2×2 boxes per face): use indices [0,2,6,8] (corners).
+    // For 9×9 (3×3 boxes per face): use indices [0..8] linearly.
+    // Zero geometry needed — can never be wrong.
+    // ═══════════════════════════════════════════════════════════════
+    const FACE_BOX_COLS = [
+      // 0 Top — blue
+      ['#e8f0ff', '#d4e4ff', '#c0d8ff',
+        '#ccdcf8', '#b8d0f2', '#a4c4ec',
+        '#b8ccf0', '#a4c0ea', '#90b4e4'],
+      // 1 Front — amber/honey
+      ['#fff8e4', '#ffefcc', '#ffe6b4',
+        '#fde09a', '#fbd780', '#f9ce66',
+        '#f6c04c', '#f4b732', '#f2ae18'],
+      // 2 Right — sage green
+      ['#e4f6e4', '#ccedc8', '#b4e4ac',
+        '#b8e4b0', '#a0db98', '#88d280',
+        '#a0dca0', '#88d388', '#70ca70'],
+      // 3 Back — lavender
+      ['#f4eeff', '#e6ddff', '#d8ccff',
+        '#e0ccfe', '#d2bbf8', '#c4aaf2',
+        '#d0aaee', '#c299e8', '#b488e2'],
+      // 4 Left — teal
+      ['#e4f6f4', '#ccecea', '#b4e2e0',
+        '#b8e2de', '#a0d8d4', '#88ceca',
+        '#a0dcd8', '#88d2ce', '#70c8c4'],
+      // 5 Bottom — rose
+      ['#fff0f4', '#ffdde4', '#ffcad4',
+        '#ffc8d0', '#ffb5bc', '#ffa2a8',
+        '#ffb4c0', '#ffa1ac', '#ff8e98'],
+    ];
+
+    const BX = { 4: { r: 2, c: 2 }, 9: { r: 3, c: 3 } };
+
+    // Return the background colour for a cell given face, box-row, box-col, and N.
+    // For 4×4 (2×2 boxes): map (bR,bC) to corners of the 9-slot palette [0,2,6,8].
+    // For 9×9 (3×3 boxes): map linearly [0..8].
+    function boxColor(face, bR, bC, N) {
+      const idx = N === 4 ? bR * 6 + bC * 2 : bR * 3 + bC;
+      return FACE_BOX_COLS[face][idx];
     }
-    fg.appendChild(cell);
-  }
-}
 
-function renderProg(){
-  const row=document.getElementById('fprog');row.innerHTML='';
-  for(let i=0;i<6;i++){
-    const p=document.createElement('div');p.className='fpip';
-    if(i===G.f)p.classList.add('active');
-    if(faceDone(i))p.classList.add('done');
-    p.title=['Top','Front','Right','Back','Left','Bottom'][i];
-    row.appendChild(p);
-  }
-}
+    // ═══════════════════════════════════════════════════════════════
+    // EDGE HELPERS + SUDOKU SOLVER
+    // ═══════════════════════════════════════════════════════════════
 
-function renderPad(){
-  const N=G.N,np=document.getElementById('np');np.innerHTML='';
-  for(let v=1;v<=N;v++){
-    const b=document.createElement('button');
-    b.className='nk'+(lit===v?' lit':'');b.textContent=v;
-    b.addEventListener('click',()=>{
-      lit=(lit===v)?null:v;renderPad();
-      if(G.sel!==null&&lit!==null)enterNum(lit);
-    });
-    np.appendChild(b);
-  }
-  const eb=document.createElement('button');
-  eb.className='nk era';eb.textContent='Erase';
-  eb.addEventListener('click',()=>{lit=null;renderPad();if(G.sel!==null)enterNum(0);});
-  np.appendChild(eb);
-}
+    const getE = (g, N, e) => {
+      if (e === 'top') return g.slice(0, N);
+      if (e === 'bottom') return g.slice((N - 1) * N);
+      if (e === 'left') return Array.from({ length: N }, (_, i) => g[i * N]);
+      if (e === 'right') return Array.from({ length: N }, (_, i) => g[i * N + N - 1]);
+    };
+    const setE = (g, N, e, v) => {
+      if (e === 'top') v.forEach((x, i) => { if (!g[i]) g[i] = x; });
+      if (e === 'bottom') v.forEach((x, i) => { if (!g[(N - 1) * N + i]) g[(N - 1) * N + i] = x; });
+      if (e === 'left') v.forEach((x, i) => { if (!g[i * N]) g[i * N] = x; });
+      if (e === 'right') v.forEach((x, i) => { if (!g[i * N + N - 1]) g[i * N + N - 1] = x; });
+    };
+    const rev = a => [...a].reverse();
 
-function renderAll(){
-  for(let i=0;i<6;i++)renderFace(i,i===G.f);
-  renderPad();renderProg();
-}
+    function shuf(a) {
+      for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0;[a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
 
-// ═══════════════════════════════════════════════════════════════
-// ACTIONS
-// ═══════════════════════════════════════════════════════════════
-let autoSync=true; // when true, filling an edge cell mirrors the value to the linked cell
+    function solveSudoku(grid, N) {
+      // MRV (Minimum Remaining Values): always pick the empty cell with the
+      // fewest valid choices. This dramatically reduces backtracking for
+      // constrained faces (especially Back face with all 4 edges set).
+      const { r: br, c: bc } = BX[N], g = [...grid];
+      const getValid = (i) => {
+        const r = (i / N) | 0, c = i % N;
+        let mask = 0;
+        for (let k = 0; k < N; k++) { mask |= (1 << g[r * N + k]); mask |= (1 << g[k * N + c]); }
+        const r0 = ((r / br) | 0) * br, c0 = ((c / bc) | 0) * bc;
+        for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) mask |= (1 << g[(r0 + dr) * N + (c0 + dc)]);
+        const v = []; for (let n = 1; n <= N; n++) if (!(mask & (1 << n))) v.push(n);
+        return v;
+      };
+      const go = () => {
+        let minLen = N + 1, minCell = -1, minValid = null;
+        for (let i = 0; i < N * N; i++) {
+          if (g[i]) continue;
+          const v = getValid(i);
+          if (v.length === 0) return false; // dead end — backtrack immediately
+          if (v.length < minLen) { minLen = v.length; minCell = i; minValid = v; if (minLen === 1) break; }
+        }
+        if (minCell === -1) return true; // all cells filled
+        for (const v of shuf(minValid)) { g[minCell] = v; if (go()) return true; g[minCell] = 0; }
+        return false;
+      };
+      return go() ? g : null;
+    }
 
-function enterNum(v){
-  if(G.sel===null)return;
-  const fc=aFs()[G.f];if(fc.gvn[G.sel])return;
-  const prevSel=G.sel;
-  fc.usr[G.sel]=v;
-  if(v)G.sel=null;
-  // Auto-sync: mirror to paired edge cell on adjacent face (fill and erase)
-  if(autoSync){
-    const linked=getLinkedEdgeCell(G.f,prevSel,G.N);
-    if(linked){
-      const lfc=aFs()[linked.face];
-      if(!lfc.gvn[linked.index]){
-        if(v) lfc.usr[linked.index]=v;
-        else lfc.usr[linked.index]=0; // also clear on erase
+    function hasConflict(g, N) {
+      const { r: br, c: bc } = BX[N];
+      for (let i = 0; i < N * N; i++) {
+        const v = g[i]; if (!v) continue;
+        const r = (i / N) | 0, c = i % N;
+        for (let k = 0; k < N; k++) { if (k !== c && g[r * N + k] === v) return true; if (k !== r && g[k * N + c] === v) return true; }
+        const r0 = ((r / br) | 0) * br, c0 = ((c / bc) | 0) * bc;
+        for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) { const j = (r0 + dr) * N + (c0 + dc); if (j !== i && g[j] === v) return true; }
+      }
+      return false;
+    }
+
+    // Verify all 12 cube edges match between solved faces
+    // Verify all 12 cube edges match between solved faces.
+    // Top:    row0=FRONT, rowN=BACK,  col0=LEFT, colN=RIGHT  (CSS rotateX(-90°))
+    // Bottom: row0=BACK,  rowN=FRONT, col0=LEFT, colN=RIGHT  (CSS rotateX(+90°))
+    // Right:  col0=FRONT, colN=BACK   Left: col0=BACK, colN=FRONT
+    // Back:   col0=cube-RIGHT, colN=cube-LEFT
+    function edgesOK(s, N) {
+      const check = (a, b) => a.every((v, i) => v === b[i]);
+      return (
+        // Top–side edges
+        check(getE(s[0], N, 'top'), getE(s[1], N, 'top')) &&  // Top.top(FRONT)==Front.top
+        check(getE(s[0], N, 'right'), getE(s[2], N, 'top')) &&  // Top.right F→B==Right.top F→B
+        check(rev(getE(s[0], N, 'left')), getE(s[4], N, 'top')) &&  // rev(Top.left)==Left.top
+        check(rev(getE(s[0], N, 'bottom')), getE(s[3], N, 'top')) &&  // rev(Top.bottom)==Back.top
+        // Side–side edges (unchanged)
+        check(getE(s[1], N, 'right'), getE(s[2], N, 'left')) &&
+        check(getE(s[2], N, 'right'), getE(s[3], N, 'left')) &&
+        check(getE(s[3], N, 'right'), getE(s[4], N, 'left')) &&
+        check(getE(s[4], N, 'right'), getE(s[1], N, 'left')) &&
+        // Bottom–side edges
+        check(getE(s[1], N, 'bottom'), getE(s[5], N, 'bottom')) &&  // Front.bottom==Bottom.bottom(FRONT)
+        check(rev(getE(s[2], N, 'bottom')), getE(s[5], N, 'right')) &&  // rev(Right.bottom)==Bottom.right
+        check(rev(getE(s[3], N, 'bottom')), getE(s[5], N, 'top')) &&  // rev(Back.bottom)==Bottom.top(BACK)
+        check(getE(s[4], N, 'bottom'), getE(s[5], N, 'left'))         // Left.bottom==Bottom.left
+      );
+    }
+
+    async function genCube(N) {
+      // Async: yields the UI thread every 10 attempts so the browser stays
+      // responsive. Outer while-loop replaces old tail-recursion (which
+      // could stack-overflow if many restarts were needed).
+      const MAX = N === 9 ? 600 : 120;
+      const yield_ = () => new Promise(r => setTimeout(r, 0));
+      while (true) {
+        for (let attempt = 0; attempt < MAX; attempt++) {
+          if (attempt % 10 === 0 || N === 9) await yield_();
+          const s = Array(6).fill(null);
+          s[1] = solveSudoku(Array(N * N).fill(0), N); if (!s[1]) continue;
+          // Top: top(FRONT edge)==Front.top
+          {
+            const g = Array(N * N).fill(0); setE(g, N, 'top', getE(s[1], N, 'top'));
+            s[0] = solveSudoku(g, N); if (!s[0]) continue;
+          }
+          // Right: left==Front.right, top==Top.right (no rev)
+          {
+            const g = Array(N * N).fill(0);
+            setE(g, N, 'left', getE(s[1], N, 'right'));
+            setE(g, N, 'top', getE(s[0], N, 'right'));
+            if (hasConflict(g, N)) continue; s[2] = solveSudoku(g, N); if (!s[2]) continue;
+          }
+          // Left: right==Front.left, top==rev(Top.left)
+          {
+            const g = Array(N * N).fill(0);
+            setE(g, N, 'right', getE(s[1], N, 'left'));
+            setE(g, N, 'top', rev(getE(s[0], N, 'left')));
+            if (hasConflict(g, N)) continue; s[4] = solveSudoku(g, N); if (!s[4]) continue;
+          }
+          // Bottom
+          {
+            const g = Array(N * N).fill(0);
+            setE(g, N, 'bottom', getE(s[1], N, 'bottom'));
+            setE(g, N, 'right', rev(getE(s[2], N, 'bottom')));
+            setE(g, N, 'left', getE(s[4], N, 'bottom'));
+            if (hasConflict(g, N)) continue; s[5] = solveSudoku(g, N); if (!s[5]) continue;
+          }
+          // Back: all 4 edges constrained
+          {
+            const g = Array(N * N).fill(0);
+            setE(g, N, 'top', rev(getE(s[0], N, 'bottom')));
+            setE(g, N, 'left', getE(s[2], N, 'right'));
+            setE(g, N, 'right', getE(s[4], N, 'left'));
+            setE(g, N, 'bottom', rev(getE(s[5], N, 'top')));
+            if (hasConflict(g, N)) continue; s[3] = solveSudoku(g, N); if (!s[3]) continue;
+          }
+          if (edgesOK(s, N)) return s;
+        }
+        console.warn('genCube: exhausted ' + MAX + ' attempts, restarting');
       }
     }
-  }
-  renderFace(G.f,true);renderProg();checkWin();
-}
 
-function swipeTo(dir){
-  if(busy)return;
-  cubeM=snap3(mul3(ROT[dir],cubeM));
-  G.f=facingFace(cubeM);
-  busy=true;G.sel=null;
-  lit=null;renderPad(); // clear selected number when face changes
-  updateActiveFaceUI(); // immediately lock pointer-events; don't wait for animation
-  applyCube(true);
-  renderFace(G.f,true);renderProg();
-  // Use transitionend so renderAll fires exactly when animation finishes.
-  // A 600ms fallback handles cases where transitionend doesn't fire
-  // (e.g. tab hidden during animation).
-  const tok=++swipeToken;
-  let done=false;
-  function onDone(){
-    if(done||tok!==swipeToken)return;
-    done=true;
-    renderAll();updateFaceRots();updateActiveFaceUI();busy=false;
-  }
-  cubeEl.addEventListener('transitionend',onDone,{once:true});
-  setTimeout(onDone,600);
-}
+    // ═══════════════════════════════════════════════════════════════
+    // EDGE CELL LINKING
+    // Maps every non-corner edge cell to its counterpart on the adjacent face.
+    // Corner cells (where 3 faces meet) are intentionally skipped — they sit
+    // on two edges simultaneously, creating triangular ambiguity with no clean
+    // symmetric pair. Non-corner edge cells each have exactly one partner.
+    // ═══════════════════════════════════════════════════════════════
+    function getLinkedEdgeCell(face, i, N) {
+      const row = (i / N) | 0, col = i % N;
+      // Corner cells → skip
+      if ((row === 0 || row === N - 1) && (col === 0 || col === N - 1)) return null;
+      const idx = (r, c) => r * N + c;
+      switch (face) {
+        case 1: // FRONT
+          if (row === 0) return { face: 0, index: idx(0, col) };           // Top.top
+          if (row === N - 1) return { face: 5, index: idx(N - 1, col) };         // Bottom.bottom
+          if (col === 0) return { face: 4, index: idx(row, N - 1) };         // Left.right
+          if (col === N - 1) return { face: 2, index: idx(row, 0) };           // Right.left
+          break;
+        case 0: // TOP  row0=FRONT
+          if (row === 0) return { face: 1, index: idx(0, col) };           // Front.top
+          if (row === N - 1) return { face: 3, index: idx(0, N - 1 - col) };       // Back.top (rev)
+          if (col === 0) return { face: 4, index: idx(0, N - 1 - row) };       // Left.top (rev)
+          if (col === N - 1) return { face: 2, index: idx(0, row) };           // Right.top
+          break;
+        case 5: // BOTTOM  row0=BACK
+          if (row === 0) return { face: 3, index: idx(N - 1, N - 1 - col) };     // Back.bottom (rev)
+          if (row === N - 1) return { face: 1, index: idx(N - 1, col) };         // Front.bottom
+          if (col === 0) return { face: 4, index: idx(N - 1, row) };         // Left.bottom
+          if (col === N - 1) return { face: 2, index: idx(N - 1, N - 1 - row) };     // Right.bottom (rev)
+          break;
+        case 2: // RIGHT  col0=FRONT
+          if (col === 0) return { face: 1, index: idx(row, N - 1) };         // Front.right
+          if (col === N - 1) return { face: 3, index: idx(row, 0) };           // Back.left
+          if (row === 0) return { face: 0, index: idx(col, N - 1) };         // Top.right
+          if (row === N - 1) return { face: 5, index: idx(N - 1 - col, N - 1) };     // Bottom.right (rev)
+          break;
+        case 4: // LEFT  col0=BACK
+          if (col === 0) return { face: 3, index: idx(row, N - 1) };         // Back.right
+          if (col === N - 1) return { face: 1, index: idx(row, 0) };           // Front.left
+          if (row === 0) return { face: 0, index: idx(N - 1 - col, 0) };       // Top.left (rev)
+          if (row === N - 1) return { face: 5, index: idx(col, 0) };           // Bottom.left
+          break;
+        case 3: // BACK  col0=cube-RIGHT
+          if (row === 0) return { face: 0, index: idx(N - 1, N - 1 - col) };     // Top.bottom (rev)
+          if (row === N - 1) return { face: 5, index: idx(0, N - 1 - col) };       // Bottom.top (rev)
+          if (col === 0) return { face: 2, index: idx(row, N - 1) };         // Right.right
+          if (col === N - 1) return { face: 4, index: idx(row, 0) };           // Left.left
+          break;
+      }
+      return null;
+    }
 
-// ═══════════════════════════════════════════════════════════════
-// INPUT — touch, mouse, keyboard
-//
-// KEY FIX: touchstart uses passive:true (no preventDefault).
-// This preserves synthetic click events on child cells.
-// touch-action:none on .stage already prevents page scrolling.
-// We detect swipe vs tap by watching touchmove with a threshold.
-// ═══════════════════════════════════════════════════════════════
-const stage=document.getElementById('stage');
-let tx=0,ty=0,tOn=false,tMoved=false;
-let mx=0,my=0,mOn=false,mMoved=false;
+    // Highlight the active face and lock pointer-events on all others.
+    // pointer-events:none must be set on BOTH the .face div AND the .fg grid —
+    // cells alone are not enough: the .fg background still absorbs clicks, and
+    // overflow:hidden does NOT clip 3D-transformed children for pointer events.
+    // Additionally, we dynamically toggle backface-visibility to visible on
+    // the active face. This prevents the browser compositor from mistakenly
+    // categorizing rotated active faces as back-facing, which would otherwise drop inputs.
+    function updateActiveFaceUI() {
+      document.querySelectorAll('.face').forEach((el, i) => {
+        const active = (i === G.f);
+        el.classList.toggle('factive', active);
+        el.style.pointerEvents = active ? '' : 'none';
+        el.style.backfaceVisibility = active ? 'visible' : 'hidden';
+        el.style.webkitBackfaceVisibility = active ? 'visible' : 'hidden';
+        const fg = el.querySelector('.fg');
+        if (fg) fg.style.pointerEvents = active ? '' : 'none';
+      });
+    }
 
-stage.addEventListener('touchstart',e=>{
-  if(e.touches.length!==1)return;
-  // NO e.preventDefault() — preserves click events on cells
-  tx=e.touches[0].clientX;ty=e.touches[0].clientY;tOn=true;tMoved=false;
-},{passive:true});
+    function mkFaces(N, sols, givens) {
+      const faces = sols.map(sol => {
+        const puz = Array(N * N).fill(0);
+        shuf([...Array(N * N).keys()]).slice(0, givens).forEach(i => puz[i] = sol[i]);
+        return { sol, puz, usr: Array(N * N).fill(0), gvn: puz.map(v => v > 0) };
+      });
+      // Pre-populate linked cells: if a given sits on an edge, mirror its value
+      // to the adjacent face's matching cell (as a soft pre-fill, not a given).
+      faces.forEach((fc, fi) => {
+        fc.gvn.forEach((isGiven, i) => {
+          if (!isGiven) return;
+          const linked = getLinkedEdgeCell(fi, i, N);
+          if (!linked) return;
+          const lfc = faces[linked.face];
+          if (!lfc.gvn[linked.index] && !lfc.usr[linked.index]) {
+            lfc.usr[linked.index] = fc.puz[i];
+          }
+        });
+      });
+      return faces;
+    }
 
-stage.addEventListener('touchmove',e=>{
-  if(!tOn)return;
-  const dx=e.touches[0].clientX-tx,dy=e.touches[0].clientY-ty;
-  if(Math.max(Math.abs(dx),Math.abs(dy))>12){
-    tMoved=true;
-    e.preventDefault(); // prevent scroll only when clearly swiping
-  }
-},{passive:false});
+    // ═══════════════════════════════════════════════════════════════
+    // DIFFICULTY MODES
+    // ═══════════════════════════════════════════════════════════════
+    const MODES = {
+      beginner: { N: 4, givens: 11, innerGivens: 6 },
+      easy: { N: 4, givens: 7, innerGivens: 3 },
+      medium: { N: 9, givens: 38, innerGivens: 26 },
+      hard: { N: 9, givens: 25, innerGivens: 17 },
+    };
 
-stage.addEventListener('touchend',e=>{
-  if(!tOn)return;tOn=false;
-  if(!tMoved)return; // tap: let click event on cell handle it
-  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;
-  swipeTo(Math.abs(dx)>Math.abs(dy)?(dx<0?'L':'R'):(dy<0?'U':'D'));
-},{passive:true});
+    // ═══════════════════════════════════════════════════════════════
+    // GAME STATE
+    // ═══════════════════════════════════════════════════════════════
+    let G = {};
+    let busy = false, lit = null, swipeToken = 0;
 
-stage.addEventListener('mousedown',e=>{mx=e.clientX;my=e.clientY;mOn=true;mMoved=false;});
-window.addEventListener('mousemove',e=>{
-  if(!mOn)return;
-  if(Math.max(Math.abs(e.clientX-mx),Math.abs(e.clientY-my))>12)mMoved=true;
-});
-window.addEventListener('mouseup',e=>{
-  if(!mOn)return;mOn=false;
-  if(!mMoved)return;
-  const dx=e.clientX-mx,dy=e.clientY-my;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<16)return;
-  swipeTo(Math.abs(dx)>Math.abs(dy)?(dx<0?'L':'R'):(dy<0?'U':'D'));
-});
+    async function startGame(key) {
+      const mode = MODES[key];
+      document.getElementById('menu').classList.add('gone');
+      document.getElementById('game').classList.add('show');
+      cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      applyCube(false);
+      G = { N: mode.N, key, f: 1, sel: null, shell: 'outer', faces: null, ifaces: null, innerGivens: mode.innerGivens };
+      document.getElementById('spip').textContent = 'Outer shell';
+      document.getElementById('spip').className = 'spip';
+      document.getElementById('wb').style.display = 'none';
+      lit = null; busy = true; ++swipeToken; // busy=true blocks input while generating
+      // Clear old puzzle content and reset cube to blank BEFORE generation starts
+      for (let i = 0; i < 6; i++) { const fg = document.getElementById('fg' + i); if (fg) fg.innerHTML = ''; }
+      // Show a loading indicator while the puzzle is being generated
+      const fprog = document.getElementById('fprog');
+      fprog.innerHTML = '<div class="gen-loading">Generating puzzle…</div>';
+      document.getElementById('hintbtn').disabled = true;
+      await new Promise(r => setTimeout(r, 0)); // let the browser paint before blocking
+      G.faces = mkFaces(mode.N, await genCube(mode.N), mode.givens);
+      busy = false;
+      document.getElementById('hintbtn').disabled = false;
+      renderAll();
+      updateFaceRots();
+      updateActiveFaceUI();
+    }
 
-document.addEventListener('keydown',e=>{
-  if(!document.getElementById('game').classList.contains('show'))return;
-  const N=G.N;
-  if(e.key>='1'&&+e.key<=N){if(G.sel!==null)enterNum(+e.key);else{lit=+e.key;renderPad();}}
-  else if(['Backspace','Delete','0'].includes(e.key)){enterNum(0);lit=null;renderPad();}
-  else if(e.key==='ArrowLeft') swipeTo('L');
-  else if(e.key==='ArrowRight')swipeTo('R');
-  else if(e.key==='ArrowUp'){e.preventDefault();swipeTo('U');}
-  else if(e.key==='ArrowDown'){e.preventDefault();swipeTo('D');}
-});
+    async function enterInner() {
+      // Fade out, rebuild, fade back in — never touch the matrix3d transform
+      const cubeEl2 = document.getElementById('cube');
+      cubeEl2.style.transition = 'opacity 0.35s ease';
+      cubeEl2.style.opacity = '0';
+      await new Promise(r => setTimeout(r, 350));
+      G.shell = 'inner'; G.f = 1; G.sel = null; lit = null;
+      cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; applyCube(false);
+      document.getElementById('spip').textContent = 'Inner shell';
+      document.getElementById('spip').className = 'spip inner';
+      document.getElementById('wb').style.display = 'none';
+      document.getElementById('hintbtn').disabled = true;
+      const fprog = document.getElementById('fprog');
+      fprog.innerHTML = '<div class="gen-loading">Generating inner shell…</div>';
+      G.ifaces = mkFaces(G.N, await genCube(G.N), G.innerGivens);
+      document.getElementById('hintbtn').disabled = false;
+      renderAll(); updateActiveFaceUI();
+      cubeEl2.style.opacity = '1';
+      setTimeout(() => { cubeEl2.style.transition = ''; }, 400);
+    }
 
-// ═══════════════════════════════════════════════════════════════
-// HINTS & NAVIGATION
-// ═══════════════════════════════════════════════════════════════
+    const aFs = () => G.shell === 'inner' ? G.ifaces : G.faces;
+    const cv = (f, i) => { const fc = aFs()[f]; return fc.gvn[i] ? fc.puz[i] : fc.usr[i] || 0; };
 
-document.getElementById('hintbtn').title='Reveal one correct number on the current face';
-document.getElementById('hintbtn').addEventListener('click',()=>{
-  if(!aFs()||busy)return;
-  const N=G.N,fc=aFs()[G.f];
-  if(!fc)return;
-  const emp=[];for(let i=0;i<N*N;i++)if(!fc.gvn[i]&&!fc.usr[i])emp.push(i);
-  if(!emp.length)return; // all cells already filled
-  const i=emp[(Math.random()*emp.length)|0];
-  const v=fc.sol[i];
-  fc.usr[i]=v;
-  G.sel=i;
-  // autoSync: mirror hint to linked edge cell on adjacent face
-  if(autoSync){
-    const linked=getLinkedEdgeCell(G.f,i,N);
-    if(linked){const lfc=aFs()[linked.face];if(!lfc.gvn[linked.index])lfc.usr[linked.index]=v;}
-  }
-  renderFace(G.f,true);renderProg();checkWin();
-});
+    function cellOK(f, i, v) {
+      const N = G.N, { r: br, c: bc } = BX[N], row = (i / N) | 0, col = i % N;
+      for (let k = 0; k < N; k++) { if (k !== col && cv(f, row * N + k) === v) return false; if (k !== row && cv(f, k * N + col) === v) return false; }
+      const r0 = ((row / br) | 0) * br, c0 = ((col / bc) | 0) * bc;
+      for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) { const j = (r0 + dr) * N + (c0 + dc); if (j !== i && cv(f, j) === v) return false; }
+      // 3D edge constraint: the paired cell on the adjacent face must match (if filled)
+      const linked = getLinkedEdgeCell(f, i, N);
+      if (linked) { const other = cv(linked.face, linked.index); if (other && other !== v) return false; }
+      return true;
+    }
 
-document.getElementById('backbtn').addEventListener('click',()=>{
-  document.getElementById('game').classList.remove('show');
-  document.getElementById('menu').classList.remove('gone');
-});
+    function faceDone(f) { const fc = aFs()[f]; return fc && fc.sol.every((_, i) => cv(f, i) === fc.sol[i]); }
 
-// ═══════════════════════════════════════════════════════════════
-// MENU
-// ═══════════════════════════════════════════════════════════════
-let chosenKey='beginner';
-document.getElementById('dlist').addEventListener('click',e=>{
-  const card=e.target.closest('.dcard');if(!card)return;
-  document.querySelectorAll('.dcard').forEach(c=>c.classList.remove('sel'));
-  card.classList.add('sel');chosenKey=card.dataset.key;
-});
-document.getElementById('playbtn').addEventListener('click',()=>startGame(chosenKey));
+    function checkWin() {
+      if (![0, 1, 2, 3, 4, 5].every(f => faceDone(f))) return;
+      const wb = document.getElementById('wb');
+      if (G.shell === 'outer') {
+        wb.innerHTML = 'Outer shell complete! <button onclick="enterInner()">Inner shell →</button>';
+      } else {
+        wb.textContent = '🎉 Sanduku solved! Both shells complete!';
+      }
+      wb.style.display = 'block';
+    }
 
-// Difficulty card mini-grids — each uses a different face palette
-function buildMG(id,rows,cols,faceIdx){
-  const el=document.getElementById(id);el.innerHTML='';
-  el.style.gridTemplateColumns=`repeat(${cols},1fr)`;
-  el.style.gridTemplateRows=`repeat(${rows},1fr)`;
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-    const sq=document.createElement('div');sq.className='dgsq';
-    sq.style.background=boxColor(faceIdx,r,c,rows===2?4:9);
-    el.appendChild(sq);
-  }
-}
-buildMG('ig-beginner',2,2,0);buildMG('ig-easy',2,2,1);
-buildMG('ig-medium',3,3,2);buildMG('ig-hard',3,3,4);
+    // ═══════════════════════════════════════════════════════════════
+    // RENDERING
+    // ═══════════════════════════════════════════════════════════════
+    function renderFace(fi, active) {
+      const N = G.N, fc = aFs()[fi], fg = document.getElementById(`fg${fi}`);
+      fg.innerHTML = '';
+      if (!fc) return;
+      const { r: br, c: bc } = BX[N];
+      const S = Math.min(window.innerWidth * .88, 420);
+      const fs = Math.max(10, Math.floor(S / (N * 2.8)));
 
-// Preview spinning cube — 4 corner colours per face from FACE_BOX_COLS
-const pc=document.getElementById('pcube');
-FACE_BOX_COLS.forEach((cols,fi)=>{
-  const f=document.createElement('div');f.className='pf';
-  f.style.gridTemplateColumns='repeat(2,1fr)';
-  f.style.gridTemplateRows='repeat(2,1fr)';
-  [0,2,6,8].forEach(idx=>{
-    const sq=document.createElement('div');sq.className='psq';sq.style.background=cols[idx];
-    f.appendChild(sq);
-  });
-  pc.appendChild(f);
-});
-</script>
+      fg.style.gridTemplateColumns = `repeat(${N},1fr)`;
+      fg.style.gridTemplateRows = `repeat(${N},1fr)`;
+
+      for (let i = 0; i < N * N; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const row = (i / N) | 0, col = i % N;
+        const bR = (row / br) | 0, bC = (col / bc) | 0;
+        cell.style.cssText = `font-size:${fs}px;background-color:${boxColor(fi, bR, bC, N)}`;
+        if (row > 0 && row % br === 0) cell.classList.add('bbt');
+        if (col > 0 && col % bc === 0) cell.classList.add('bbl');
+
+        const v = cv(fi, i);
+        if (v) {
+          const cn = document.createElement('span'); cn.className = 'cn'; cn.textContent = v;
+          const rot = faceContentRot(fi); if (rot) cn.style.transform = `rotate(${rot}deg)`;
+          if (!fc.gvn[i] && !cellOK(fi, i, v)) cn.style.color = 'var(--red)';
+          cell.appendChild(cn);
+        }
+
+        if (fc.gvn[i]) {
+          cell.classList.add('given');
+        } else {
+          // Visual sel/hl — only when this face was rendered as active
+          if (active) {
+            if (G.sel === i) cell.classList.add('sel');
+            else if (G.sel !== null) {
+              const sr = (G.sel / N) | 0, sc = G.sel % N;
+              const sameBox = ((sr / br) | 0) === ((row / br) | 0) && ((sc / bc) | 0) === ((col / bc) | 0);
+              if (sr === row || sc === col || sameBox) cell.classList.add('hl');
+            }
+          }
+          // Normal cell click event. The active face will receive pointer events directly
+          // because backface-visibility is explicitly set to visible for it.
+          const idx = i, faceIdx = fi;
+          cell.addEventListener('click', () => {
+            if (busy || G.f !== faceIdx) return;
+            if (lit !== null) { G.sel = idx; enterNum(lit); return; }
+            G.sel = (G.sel === idx) ? null : idx;
+            renderFace(G.f, true);
+          });
+        }
+        // Edge-cell hover: highlight the counterpart on the adjacent face
+        const linked = getLinkedEdgeCell(fi, i, N);
+        if (linked) {
+          cell.addEventListener('mouseenter', () => {
+            const tfg = document.getElementById(`fg${linked.face}`);
+            if (tfg) tfg.children[linked.index]?.classList.add('edgehl');
+          });
+          cell.addEventListener('mouseleave', () => {
+            const tfg = document.getElementById(`fg${linked.face}`);
+            if (tfg) tfg.children[linked.index]?.classList.remove('edgehl');
+          });
+        }
+        fg.appendChild(cell);
+      }
+    }
+
+    function renderProg() {
+      const row = document.getElementById('fprog'); row.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const p = document.createElement('div'); p.className = 'fpip';
+        if (i === G.f) p.classList.add('active');
+        if (faceDone(i)) p.classList.add('done');
+        p.title = ['Top', 'Front', 'Right', 'Back', 'Left', 'Bottom'][i];
+        row.appendChild(p);
+      }
+    }
+
+    function renderPad() {
+      const N = G.N, np = document.getElementById('np'); np.innerHTML = '';
+      for (let v = 1; v <= N; v++) {
+        const b = document.createElement('button');
+        b.className = 'nk' + (lit === v ? ' lit' : ''); b.textContent = v;
+        b.addEventListener('click', () => {
+          lit = (lit === v) ? null : v; renderPad();
+          if (G.sel !== null && lit !== null) enterNum(lit);
+        });
+        np.appendChild(b);
+      }
+      const eb = document.createElement('button');
+      eb.className = 'nk era'; eb.textContent = 'Erase';
+      eb.addEventListener('click', () => { lit = null; renderPad(); if (G.sel !== null) enterNum(0); });
+      np.appendChild(eb);
+    }
+
+    function renderAll() {
+      for (let i = 0; i < 6; i++)renderFace(i, i === G.f);
+      renderPad(); renderProg();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ACTIONS
+    // ═══════════════════════════════════════════════════════════════
+    let autoSync = true; // when true, filling an edge cell mirrors the value to the linked cell
+
+    function enterNum(v) {
+      if (G.sel === null) return;
+      const fc = aFs()[G.f]; if (fc.gvn[G.sel]) return;
+      const prevSel = G.sel;
+      fc.usr[G.sel] = v;
+      if (v) G.sel = null;
+      // Auto-sync: mirror to paired edge cell on adjacent face (fill and erase)
+      if (autoSync) {
+        const linked = getLinkedEdgeCell(G.f, prevSel, G.N);
+        if (linked) {
+          const lfc = aFs()[linked.face];
+          if (!lfc.gvn[linked.index]) {
+            if (v) lfc.usr[linked.index] = v;
+            else lfc.usr[linked.index] = 0; // also clear on erase
+          }
+        }
+      }
+      renderFace(G.f, true); renderProg(); checkWin();
+    }
+
+    function swipeTo(dir) {
+      if (busy) return;
+      cubeM = snap3(mul3(ROT[dir], cubeM));
+      G.f = facingFace(cubeM);
+      busy = true; G.sel = null;
+      lit = null; renderPad(); // clear selected number when face changes
+      updateActiveFaceUI(); // immediately lock pointer-events; don't wait for animation
+      applyCube(true);
+      renderFace(G.f, true); renderProg();
+      // Use transitionend so renderAll fires exactly when animation finishes.
+      // A 600ms fallback handles cases where transitionend doesn't fire
+      // (e.g. tab hidden during animation).
+      const tok = ++swipeToken;
+      let done = false;
+      function onDone() {
+        if (done || tok !== swipeToken) return;
+        done = true;
+        renderAll(); updateFaceRots(); updateActiveFaceUI(); busy = false;
+      }
+      cubeEl.addEventListener('transitionend', onDone, { once: true });
+      setTimeout(onDone, 600);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // INPUT — touch, mouse, keyboard
+    //
+    // KEY FIX: touchstart uses passive:true (no preventDefault).
+    // This preserves synthetic click events on child cells.
+    // touch-action:none on .stage already prevents page scrolling.
+    // We detect swipe vs tap by watching touchmove with a threshold.
+    // ═══════════════════════════════════════════════════════════════
+    const stage = document.getElementById('stage');
+    let tx = 0, ty = 0, tOn = false, tMoved = false;
+    let mx = 0, my = 0, mOn = false, mMoved = false;
+
+    stage.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      // NO e.preventDefault() — preserves click events on cells
+      tx = e.touches[0].clientX; ty = e.touches[0].clientY; tOn = true; tMoved = false;
+    }, { passive: true });
+
+    stage.addEventListener('touchmove', e => {
+      if (!tOn) return;
+      const dx = e.touches[0].clientX - tx, dy = e.touches[0].clientY - ty;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) {
+        tMoved = true;
+        e.preventDefault(); // prevent scroll only when clearly swiping
+      }
+    }, { passive: false });
+
+    stage.addEventListener('touchend', e => {
+      if (!tOn) return; tOn = false;
+      if (!tMoved) return; // tap: let click event on cell handle it
+      const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+      swipeTo(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'U' : 'D'));
+    }, { passive: true });
+
+    stage.addEventListener('mousedown', e => { mx = e.clientX; my = e.clientY; mOn = true; mMoved = false; });
+    window.addEventListener('mousemove', e => {
+      if (!mOn) return;
+      if (Math.max(Math.abs(e.clientX - mx), Math.abs(e.clientY - my)) > 12) mMoved = true;
+    });
+    window.addEventListener('mouseup', e => {
+      if (!mOn) return; mOn = false;
+      if (!mMoved) return;
+      const dx = e.clientX - mx, dy = e.clientY - my;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 16) return;
+      swipeTo(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'U' : 'D'));
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('game').classList.contains('show')) return;
+      const N = G.N;
+      if (e.key >= '1' && +e.key <= N) { if (G.sel !== null) enterNum(+e.key); else { lit = +e.key; renderPad(); } }
+      else if (['Backspace', 'Delete', '0'].includes(e.key)) { enterNum(0); lit = null; renderPad(); }
+      else if (e.key === 'ArrowLeft') swipeTo('L');
+      else if (e.key === 'ArrowRight') swipeTo('R');
+      else if (e.key === 'ArrowUp') { e.preventDefault(); swipeTo('U'); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); swipeTo('D'); }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // HINTS & NAVIGATION
+    // ═══════════════════════════════════════════════════════════════
+
+    document.getElementById('hintbtn').title = 'Reveal one correct number on the current face';
+    document.getElementById('hintbtn').addEventListener('click', () => {
+      if (!aFs() || busy) return;
+      const N = G.N, fc = aFs()[G.f];
+      if (!fc) return;
+      const emp = []; for (let i = 0; i < N * N; i++)if (!fc.gvn[i] && !fc.usr[i]) emp.push(i);
+      if (!emp.length) return; // all cells already filled
+      const i = emp[(Math.random() * emp.length) | 0];
+      const v = fc.sol[i];
+      fc.usr[i] = v;
+      G.sel = i;
+      // autoSync: mirror hint to linked edge cell on adjacent face
+      if (autoSync) {
+        const linked = getLinkedEdgeCell(G.f, i, N);
+        if (linked) { const lfc = aFs()[linked.face]; if (!lfc.gvn[linked.index]) lfc.usr[linked.index] = v; }
+      }
+      renderFace(G.f, true); renderProg(); checkWin();
+    });
+
+    document.getElementById('backbtn').addEventListener('click', () => {
+      document.getElementById('game').classList.remove('show');
+      document.getElementById('menu').classList.remove('gone');
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // MENU
+    // ═══════════════════════════════════════════════════════════════
+    let chosenKey = 'beginner';
+    document.getElementById('dlist').addEventListener('click', e => {
+      const card = e.target.closest('.dcard'); if (!card) return;
+      document.querySelectorAll('.dcard').forEach(c => c.classList.remove('sel'));
+      card.classList.add('sel'); chosenKey = card.dataset.key;
+    });
+    document.getElementById('playbtn').addEventListener('click', () => startGame(chosenKey));
+
+    // Difficulty card mini-grids — each uses a different face palette
+    function buildMG(id, rows, cols, faceIdx) {
+      const el = document.getElementById(id); el.innerHTML = '';
+      el.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+      el.style.gridTemplateRows = `repeat(${rows},1fr)`;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const sq = document.createElement('div'); sq.className = 'dgsq';
+        sq.style.background = boxColor(faceIdx, r, c, rows === 2 ? 4 : 9);
+        el.appendChild(sq);
+      }
+    }
+    buildMG('ig-beginner', 2, 2, 0); buildMG('ig-easy', 2, 2, 1);
+    buildMG('ig-medium', 3, 3, 2); buildMG('ig-hard', 3, 3, 4);
+
+    // Preview spinning cube — 4 corner colours per face from FACE_BOX_COLS
+    const pc = document.getElementById('pcube');
+    FACE_BOX_COLS.forEach((cols, fi) => {
+      const f = document.createElement('div'); f.className = 'pf';
+      f.style.gridTemplateColumns = 'repeat(2,1fr)';
+      f.style.gridTemplateRows = 'repeat(2,1fr)';
+      [0, 2, 6, 8].forEach(idx => {
+        const sq = document.createElement('div'); sq.className = 'psq'; sq.style.background = cols[idx];
+        f.appendChild(sq);
+      });
+      pc.appendChild(f);
+    });
+  </script>
 </body>
+
 </html>
