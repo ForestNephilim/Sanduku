@@ -1197,9 +1197,9 @@
       cubeEl2.style.transition = 'opacity 0.35s ease';
       cubeEl2.style.opacity = '0';
       await new Promise(r => setTimeout(r, 350));
-      
+
       unmountFrontplate();
-      
+
       G.shell = 'inner'; G.f = 1; G.sel = null; lit = null;
       cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; applyCube(false);
       document.getElementById('spip').textContent = 'Inner shell';
@@ -1374,7 +1374,7 @@
     function swipeTo(dir) {
       if (busy) return;
       unmountFrontplate();
-      
+
       cubeM = snap3(mul3(ROT[dir], cubeM));
       G.f = facingFace(cubeM);
       busy = true; G.sel = null;
