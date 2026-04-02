@@ -5,30 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Sanduku</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 :root {
-  --bg:#111318; --sur:#1c1d26; --sur2:#262733;
-  --tx:#e8eaf4; --tx2:#5a5c72;
-  --acc:#5b8ef0; --green:#4ade80; --red:#f06060;
+  --bg: #0b0c10;
+  --sur: rgba(28, 29, 38, 0.45);
+  --sur2: rgba(45, 47, 61, 0.65);
+  --tx: #f3f4f6; --tx2: #9ca3af;
+  --acc: #8b5cf6; --acc2: #3b82f6;
+  --green: #10b981; --red: #ef4444;
   --S: min(82vw, 82vh, 400px);
   --H: calc(var(--S) / 2);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
 body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:var(--bg);color:var(--tx);
-  height:100dvh;display:flex;flex-direction:column;align-items:center;
+  font-family: 'Outfit', -apple-system, sans-serif;
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.15), transparent 45%);
+  color: var(--tx);
+  height: 100dvh; display: flex; flex-direction: column; align-items: center;
 }
 
 /* ═══ MENU ═════════════════════════════════════════════════════ */
 #menu{
   position:fixed;inset:0;z-index:20;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:28px 22px;overflow-y:auto;background:var(--bg);
+  padding:28px 22px;overflow-y:auto;background:transparent;
 }
 #menu.gone{display:none}
-.m-logo{font-size:clamp(52px,16vw,78px);font-weight:900;letter-spacing:-4px;line-height:1}
-.m-tag{font-size:11px;color:var(--tx2);letter-spacing:5px;text-transform:uppercase;margin:5px 0 28px}
+.m-logo{
+  font-size:clamp(52px,16vw,78px);font-weight:900;letter-spacing:-4px;line-height:1;
+  background: linear-gradient(to right, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.m-tag{font-size:13px;font-weight:600;color:var(--tx2);letter-spacing:5px;text-transform:uppercase;margin:5px 0 28px}
 
 .pw{perspective:360px;width:90px;height:90px;margin-bottom:26px}
 .pc{width:90px;height:90px;position:relative;transform-style:preserve-3d;animation:pspin 11s linear infinite}
@@ -49,37 +62,48 @@ body{
 .diff-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px}
 .dcard{
   display:flex;align-items:center;gap:14px;padding:14px 16px;
-  background:var(--sur);border:1.5px solid transparent;border-radius:14px;cursor:pointer;
-  transition:border-color .15s,background .12s;
+  background:var(--sur);border:1.5px solid rgba(255,255,255,0.05);border-radius:18px;cursor:pointer;
+  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
-.dcard:hover{background:var(--sur2)}
-.dcard.sel{border-color:var(--acc)}
+.dcard:hover{background:var(--sur2); transform: translateY(-3px); border-color: rgba(255,255,255,0.15);}
+.dcard.sel{border-color:var(--acc); box-shadow: 0 4px 24px rgba(139, 92, 246, 0.25);}
 .dgrid{
   width:40px;height:40px;flex-shrink:0;display:grid;gap:3px;padding:4px;
   background:rgba(255,255,255,.04);border-radius:9px;
 }
 .dgsq{border-radius:2px}
-.dname{font-size:15px;font-weight:700}
-.ddesc{font-size:12px;color:var(--tx2);margin-top:2px}
-.dradio{width:20px;height:20px;border-radius:50%;border:2px solid var(--tx2);flex-shrink:0;margin-left:auto;transition:all .15s}
-.dcard.sel .dradio{background:var(--acc);border-color:var(--acc)}
+.dname{font-size:16px;font-weight:700}
+.ddesc{font-size:13px;color:var(--tx2);margin-top:2px}
+.dradio{width:22px;height:22px;border-radius:50%;border:2px solid var(--tx2);flex-shrink:0;margin-left:auto;transition:all .2s}
+.dcard.sel .dradio{background:var(--acc);border-color:var(--acc); box-shadow: inset 0 0 0 4px var(--sur), 0 0 8px rgba(139,92,246,0.6);}
 .play-btn{
-  width:100%;max-width:340px;margin-top:18px;padding:16px;
-  font-size:17px;font-weight:800;border:none;border-radius:14px;
-  background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;
-  transition:opacity .15s,transform .1s;
+  width:100%;max-width:340px;margin-top:18px;padding:18px;
+  font-size:18px;font-weight:800;border:none;border-radius:18px;
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  color:#fff;cursor:pointer;font-family:inherit;
+  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
-.play-btn:hover{opacity:.88}
-.play-btn:active{transform:scale(.97)}
+.play-btn:hover{transform:translateY(-2px); box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);}
+.play-btn:active{transform:scale(.96);}
 
 /* ═══ GAME ══════════════════════════════════════════════════════ */
 #game{
   position:fixed;inset:0;z-index:10;
-  display:none;flex-direction:column;align-items:center;background:var(--bg);
+  display:none;flex-direction:column;align-items:center;background:transparent;
 }
 #game.show{display:flex}
 .gh{display:flex;align-items:center;gap:10px;width:100%;padding:max(14px,env(safe-area-inset-top)) 14px 6px;flex-shrink:0}
-.back-btn{width:34px;height:34px;border-radius:9px;background:var(--sur);border:none;color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.back-btn{
+  width:38px;height:38px;border-radius:12px;
+  background:var(--sur);border:1px solid rgba(255,255,255,0.08);
+  color:var(--tx);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: all .15s;
+}
+.back-btn:hover{background:var(--sur2); transform: scale(1.05);}
+.back-btn:active{transform: scale(0.95);}
 .gtitle{font-size:17px;font-weight:800;letter-spacing:-.5px}
 .spip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;background:rgba(91,142,240,.15);color:var(--acc)}
 .spip.inner{background:rgba(167,139,250,.15);color:#a78bfa}
@@ -135,8 +159,10 @@ body{
 .cell{
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;user-select:none;-webkit-user-select:none;
-  position:relative;
+  position:relative; transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.cell:hover{ transform: scale(0.92); z-index:4; }
+.cell.given:hover{ transform: none; z-index:auto; }
 /* NUMBER SPAN — separate element so rotation of .fg doesn't need
    additional counter-rotation on text; numbers stay in grid order */
 .cn{font-weight:500;color:rgba(0,0,0,.80);font-size:inherit;line-height:1}
@@ -149,7 +175,7 @@ body{
 .cell.bbl{border-left: 2.5px solid rgba(0,0,0,.48)}
 .cell.edgehl::after{content:'';position:absolute;inset:0;border:2.5px dashed rgba(255,255,255,.75);pointer-events:none;z-index:3}
 .cell.given{cursor:default}
-.face.factive{box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc)}
+.face.factive{box-shadow:inset 0 0 0 2px rgba(0,0,0,.45),0 0 32px rgba(0,0,0,.5),0 0 0 3px var(--acc), 0 0 40px rgba(139, 92, 246, 0.35)}
 
 .wb{
   display:none;margin:0 14px 4px;padding:10px 14px;
@@ -162,10 +188,19 @@ body{
 /* ═══ NUMPAD ════════════════════════════════════════════════════ */
 .npwrap{flex-shrink:0;padding:6px 12px max(10px,env(safe-area-inset-bottom));width:100%}
 .np{display:flex;gap:5px;justify-content:center;max-width:480px;margin:0 auto}
-.nk{flex:1;height:52px;background:var(--sur);border:none;border-radius:12px;color:var(--tx);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .1s,transform .08s}
-.nk:hover{background:var(--sur2)}
-.nk:active{transform:scale(.91)}
-.nk.lit{background:var(--acc);color:#fff}
+.nk{
+  flex:1;height:56px;background:var(--sur);
+  border:1.5px solid rgba(255,255,255,0.05);border-radius:14px;
+  color:var(--tx);font-size:22px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:all .15s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.nk:hover{background:var(--sur2); transform: translateY(-2px);}
+.nk:active{transform:scale(.91);}
+.nk.lit{
+  background: linear-gradient(135deg, var(--acc), var(--acc2));
+  border-color:transparent; color:#fff; box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
 .nk.era{font-size:13px;font-weight:600;flex:1.4}
 </style>
 </head>
@@ -565,13 +600,17 @@ function getLinkedEdgeCell(face,i,N){
 // Highlight the active face and lock pointer-events on all others.
 // pointer-events:none must be set on BOTH the .face div AND the .fg grid —
 // cells alone are not enough: the .fg background still absorbs clicks, and
-// overflow:hidden does NOT clip 3D-transformed children for pointer events,
-// so an inactive face's projected area can extend over the header/numpad.
+// overflow:hidden does NOT clip 3D-transformed children for pointer events.
+// Additionally, we dynamically toggle backface-visibility to visible on
+// the active face. This prevents the browser compositor from mistakenly
+// categorizing rotated active faces as back-facing, which would otherwise drop inputs.
 function updateActiveFaceUI(){
   document.querySelectorAll('.face').forEach((el,i)=>{
     const active=(i===G.f);
     el.classList.toggle('factive',active);
     el.style.pointerEvents=active?'':'none';
+    el.style.backfaceVisibility=active?'visible':'hidden';
+    el.style.webkitBackfaceVisibility=active?'visible':'hidden';
     const fg=el.querySelector('.fg');
     if(fg) fg.style.pointerEvents=active?'':'none';
   });
@@ -732,8 +771,8 @@ function renderFace(fi,active){
           if(sr===row||sc===col||sameBox) cell.classList.add('hl');
         }
       }
-      // Faces 0,1,2,4 receive clicks here normally.
-      // Faces 3 and 5 fall through to the stage click handler (backface bug).
+      // Normal cell click event. The active face will receive pointer events directly
+      // because backface-visibility is explicitly set to visible for it.
       const idx=i,faceIdx=fi;
       cell.addEventListener('click',()=>{
         if(busy||G.f!==faceIdx)return;
@@ -899,44 +938,8 @@ document.addEventListener('keydown',e=>{
 });
 
 // ═══════════════════════════════════════════════════════════════
-// STAGE CLICK — fallback for faces 3 & 5
-//
-// Faces 3 (rotateY180) and 5 (rotateX90) are permanently classified
-// as "back-facing" by the browser compositor based on their initial
-// CSS transforms. backface-visibility:hidden must stay (removing it
-// causes invisible back-faces to ghost over the UI and block the header).
-//
-// When the cube rotates to bring face 3 or 5 forward, their cells
-// have pointer-events set but the compositor silently ignores them.
-// Clicks fall straight through the face element to the stage div.
-// We catch them here and map screen coords → cell index ourselves.
+// HINTS & NAVIGATION
 // ═══════════════════════════════════════════════════════════════
-stage.addEventListener('click',e=>{
-  if(busy||!aFs()||G.f!==3&&G.f!==5)return;
-  const fc=aFs()[G.f];if(!fc)return;
-  // Use the fg element's projected bounding rect as the reference —
-  // getBoundingClientRect() on a 3D-transformed element returns its
-  // 2D axis-aligned screen rect, which is accurate when the face is
-  // flat-on toward the viewer.
-  const fg=document.getElementById('fg'+G.f);
-  if(!fg)return;
-  const rect=fg.getBoundingClientRect();
-  let vx=(e.clientX-rect.left)/rect.width;
-  let vy=(e.clientY-rect.top)/rect.height;
-  if(vx<0||vx>1||vy<0||vy>1)return; // click missed the face
-  vx=Math.min(.9999,vx); vy=Math.min(.9999,vy);
-  const N=G.N,rot=faceContentRot(G.f);
-  let gc,gr;
-  if     (rot===0)  {gc=Math.floor(vx*N);    gr=Math.floor(vy*N);}
-  else if(rot===90) {gc=Math.floor((1-vy)*N);gr=Math.floor(vx*N);}
-  else if(rot===-90){gc=Math.floor(vy*N);    gr=Math.floor((1-vx)*N);}
-  else              {gc=Math.floor((1-vx)*N);gr=Math.floor((1-vy)*N);}
-  const idx=gr*N+gc;
-  if(idx<0||idx>=N*N||fc.gvn[idx])return;
-  if(lit!==null){G.sel=idx;enterNum(lit);return;}
-  G.sel=(G.sel===idx)?null:idx;
-  renderFace(G.f,true);
-});
 
 document.getElementById('hintbtn').title='Reveal one correct number on the current face';
 document.getElementById('hintbtn').addEventListener('click',()=>{
