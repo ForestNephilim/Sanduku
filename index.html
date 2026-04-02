@@ -402,7 +402,7 @@
       align-items: center;
       justify-content: center;
       perspective: calc(var(--S)*3);
-      perspective-origin: 50% 48%;
+      perspective-origin: 50% 50%;
       touch-action: none;
       overflow: hidden;
       cursor: grab;
@@ -504,14 +504,14 @@
    additional counter-rotation on text; numbers stay in grid order */
     .cn {
       font-weight: 500;
-      color: var(--acc2);
+      color: rgba(0, 0, 0, .85);
       font-size: inherit;
       line-height: 1
     }
 
     .cell.given .cn {
-      font-weight: 600;
-      color: rgba(0, 0, 0, .90)
+      font-weight: 700;
+      color: #000;
     }
 
     .cell.err .cn {
@@ -1262,15 +1262,9 @@
               if (sr === row || sc === col || sameBox) cell.classList.add('hl');
             }
           }
-          // Normal cell click event. The active face will receive pointer events directly
-          // because backface-visibility is explicitly set to visible for it.
-          const idx = i, faceIdx = fi;
-          cell.addEventListener('click', () => {
-            if (busy || G.f !== faceIdx) return;
-            if (lit !== null) { G.sel = idx; enterNum(lit); return; }
-            G.sel = (G.sel === idx) ? null : idx;
-            renderFace(G.f, true);
-          });
+          // The native cell click event has been exclusively shifted to handleStageTap 
+          // raycaster on the .stage wrapper. DO NOT bind cell events here, as Safari iOS 
+          // aggressively culls rotated 3D nested objects from the hit-test tree.
         }
         // Edge-cell hover: highlight the counterpart on the adjacent face
         const linked = getLinkedEdgeCell(fi, i, N);
@@ -1402,7 +1396,7 @@
       if (!tMoved || Math.max(Math.abs(dx), Math.abs(dy)) < 18) {
         // pure tap sequence bypasses OS click lock
         handleStageTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-        return; 
+        return;
       }
       swipeTo(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'L' : 'R') : (dy < 0 ? 'U' : 'D'));
     }, { passive: true });
@@ -1438,19 +1432,25 @@
     // STAGE CLICK — fallback coordinate raycaster
     // ═══════════════════════════════════════════════════════════════
     function handleStageTap(clientX, clientY) {
-      if (busy || !aFs() || (G.f !== 3 && G.f !== 5)) return;
+      if (busy || !aFs()) return;
       const fc = aFs()[G.f];
       if (!fc) return;
 
       const sRect = stage.getBoundingClientRect();
       const S = Math.min(window.innerWidth * 0.82, window.innerHeight * 0.82, 400);
+
+      // Calculate depth perspective scale. 
+      // Camera is P = S*3 away. The front face is Z = S/2 towards the camera. 
+      // Rendered visual scale on projection plane = P / (P - Z) = 3 / 2.5 = 1.2
+      const visual_S = S * 1.2;
+
       const cx = sRect.left + sRect.width / 2;
       const cy = sRect.top + sRect.height / 2;
-      const left = cx - S / 2;
-      const top = cy - S / 2;
+      const left = cx - visual_S / 2;
+      const top = cy - visual_S / 2;
 
-      let vx = (clientX - left) / S;
-      let vy = (clientY - top) / S;
+      let vx = (clientX - left) / visual_S;
+      let vy = (clientY - top) / visual_S;
       if (vx < 0 || vx > 1 || vy < 0 || vy > 1) return;
       vx = Math.min(.9999, Math.max(0, vx));
       vy = Math.min(.9999, Math.max(0, vy));
@@ -1458,8 +1458,8 @@
       const N = G.N, rot = faceContentRot(G.f);
       let gc, gr;
       if (rot === 0) { gc = Math.floor(vx * N); gr = Math.floor(vy * N); }
-      else if (rot === 90) { gc = Math.floor((1 - vy) * N); gr = Math.floor(vx * N); }
-      else if (rot === -90) { gc = Math.floor(vy * N); gr = Math.floor((1 - vx) * N); }
+      else if (rot === 90) { gc = Math.floor(vy * N); gr = Math.floor((1 - vx) * N); }
+      else if (rot === -90) { gc = Math.floor((1 - vy) * N); gr = Math.floor(vx * N); }
       else { gc = Math.floor((1 - vx) * N); gr = Math.floor((1 - vy) * N); }
 
       const idx = gr * N + gc;
@@ -1468,7 +1468,7 @@
       G.sel = (G.sel === idx) ? null : idx;
       renderFace(G.f, true);
     }
-    
+
     stage.addEventListener('click', e => {
       // standard desktop click pipeline
       handleStageTap(e.clientX, e.clientY);
