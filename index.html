@@ -406,6 +406,7 @@
       touch-action: none;
       overflow: hidden;
       cursor: grab;
+      position: relative;
     }
 
     .stage:active {
@@ -567,6 +568,41 @@
 
     .face.factive {
       box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .45), 0 0 32px rgba(0, 0, 0, .5), 0 0 0 3px var(--acc), 0 0 40px rgba(139, 92, 246, 0.35)
+    }
+
+    /* ═══ HIT-LAYER — Pure 2D input overlay ═══════════════════════════
+       Sits directly over the 3D cube with ZERO CSS 3D transforms.
+       Captures all click/hover events reliably on every browser/OS. */
+    #hit-layer {
+      position: absolute;
+      width: var(--S);
+      height: var(--S);
+      z-index: 15;
+      display: none;
+      pointer-events: auto;
+    }
+
+    #hit-layer .hit-grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+    }
+
+    #hit-layer .hit-cell {
+      cursor: pointer;
+      background: transparent;
+    }
+
+    #hit-layer .hit-cell.hit-given {
+      cursor: default;
+    }
+
+    #hit-layer .hit-cell:hover {
+      background: rgba(139, 92, 246, 0.10);
+    }
+
+    #hit-layer .hit-cell.hit-given:hover {
+      background: transparent;
     }
 
     .wb {
@@ -731,7 +767,7 @@
           <div class="fg" id="fg5"></div>
         </div>
       </div>
-      <div id="frontplate" class="face factive" style="display: none; z-index: 20;"></div>
+      <div id="hit-layer"></div>
     </div>
     <div class="wb" id="wb"></div>
     <div class="npwrap">
@@ -982,14 +1018,18 @@
     }
 
     async function genCube(N) {
+      // For 9×9 grids, generate 6 independent boards instantly (no edge constraints).
+      // For 4×4 grids, keep full interconnected edge-constraint generation.
+      if (N === 9) return genCubeFast(N);
+
       // Async: yields the UI thread every 10 attempts so the browser stays
       // responsive. Outer while-loop replaces old tail-recursion (which
       // could stack-overflow if many restarts were needed).
-      const MAX = N === 9 ? 600 : 120;
+      const MAX = 120;
       const yield_ = () => new Promise(r => setTimeout(r, 0));
       while (true) {
         for (let attempt = 0; attempt < MAX; attempt++) {
-          if (attempt % 10 === 0 || N === 9) await yield_();
+          if (attempt % 10 === 0) await yield_();
           const s = Array(6).fill(null);
           s[1] = solveSudoku(Array(N * N).fill(0), N); if (!s[1]) continue;
           // Top: top(FRONT edge)==Front.top
@@ -1032,6 +1072,18 @@
         }
         console.warn('genCube: exhausted ' + MAX + ' attempts, restarting');
       }
+    }
+
+    // Fast generator for 9×9: 6 completely independent Sudoku boards.
+    // No inter-face edge constraints — generates in ~50ms instead of minutes.
+    async function genCubeFast(N) {
+      const yield_ = () => new Promise(r => setTimeout(r, 0));
+      const s = [];
+      for (let i = 0; i < 6; i++) {
+        await yield_();
+        s.push(solveSudoku(Array(N * N).fill(0), N));
+      }
+      return s;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1092,38 +1144,66 @@
       document.querySelectorAll('.face').forEach((el, i) => {
         const active = (i === G.f);
         el.classList.toggle('factive', active);
-        el.style.pointerEvents = 'none'; // NEVER allow raw 3D DOM to steal hits via Safari cull plane!
+        el.style.pointerEvents = 'none'; // All input goes through #hit-layer
         el.style.backfaceVisibility = active ? 'visible' : 'hidden';
         el.style.webkitBackfaceVisibility = active ? 'visible' : 'hidden';
-        const fg = el.querySelector('.fg');
-        if (fg) fg.style.pointerEvents = active ? '' : 'none';
       });
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // FRONTPLATE SWAPPING ENGINE
-    // Webkit destroys native :hover and click events on deeply rotated 
-    // 3D elements in its render tree. We perfectly dodge this by yoinking 
-    // the currently active grid into a flat un-rotated 2D overlay container 
-    // instantly after each swipe animates. It is 100% bug proof.
+    // HIT-LAYER ENGINE
+    // Pure 2D transparent overlay positioned over the 3D cube.
+    // Zero CSS 3D transforms — guaranteed reliable click/hover on
+    // every browser and OS including Safari iOS.
     // ═══════════════════════════════════════════════════════════════
-    function mountFrontplate() {
-      const fp = document.getElementById('frontplate');
-      const fg = document.getElementById(`fg${G.f}`);
-      if (fg) fp.appendChild(fg);
-      const zRot = -faceContentRot(G.f);
-      fp.style.transform = `translateZ(var(--H)) rotateZ(${zRot}deg)`;
-      fp.style.display = 'block';
-    }
+    function buildHitLayer() {
+      const hl = document.getElementById('hit-layer');
+      hl.innerHTML = '';
+      if (!aFs() || !aFs()[G.f]) { hl.style.display = 'none'; return; }
 
-    function unmountFrontplate() {
-      const fp = document.getElementById('frontplate');
-      const fg = fp.firstElementChild;
-      if (fg) {
-        const faceSlot = document.querySelector(`.face[data-f="${G.f}"]`);
-        if (faceSlot) faceSlot.appendChild(fg);
+      const N = G.N;
+      const fc = aFs()[G.f];
+
+      const grid = document.createElement('div');
+      grid.className = 'hit-grid';
+      grid.style.gridTemplateColumns = `repeat(${N},1fr)`;
+      grid.style.gridTemplateRows = `repeat(${N},1fr)`;
+
+      for (let i = 0; i < N * N; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'hit-cell';
+        if (fc.gvn[i]) cell.classList.add('hit-given');
+
+        // Click handler — wired to game state
+        const idx = i;
+        if (!fc.gvn[i]) {
+          cell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (busy) return;
+            if (lit !== null) { G.sel = idx; enterNum(lit); return; }
+            G.sel = (G.sel === idx) ? null : idx;
+            renderFace(G.f, true);
+          });
+        }
+
+        // Edge-cell hover: highlight counterpart on adjacent face
+        const linked = (N === 4) ? getLinkedEdgeCell(G.f, i, N) : null;
+        if (linked) {
+          cell.addEventListener('mouseenter', () => {
+            const tfg = document.getElementById(`fg${linked.face}`);
+            if (tfg) tfg.children[linked.index]?.classList.add('edgehl');
+          });
+          cell.addEventListener('mouseleave', () => {
+            const tfg = document.getElementById(`fg${linked.face}`);
+            if (tfg) tfg.children[linked.index]?.classList.remove('edgehl');
+          });
+        }
+
+        grid.appendChild(cell);
       }
-      fp.style.display = 'none';
+
+      hl.appendChild(grid);
+      hl.style.display = 'grid';
     }
 
     function mkFaces(N, sols, givens) {
@@ -1134,17 +1214,20 @@
       });
       // Pre-populate linked cells: if a given sits on an edge, mirror its value
       // to the adjacent face's matching cell (as a soft pre-fill, not a given).
-      faces.forEach((fc, fi) => {
-        fc.gvn.forEach((isGiven, i) => {
-          if (!isGiven) return;
-          const linked = getLinkedEdgeCell(fi, i, N);
-          if (!linked) return;
-          const lfc = faces[linked.face];
-          if (!lfc.gvn[linked.index] && !lfc.usr[linked.index]) {
-            lfc.usr[linked.index] = fc.puz[i];
-          }
+      // Only for N=4 (interconnected edges). N=9 faces are independent.
+      if (N === 4) {
+        faces.forEach((fc, fi) => {
+          fc.gvn.forEach((isGiven, i) => {
+            if (!isGiven) return;
+            const linked = getLinkedEdgeCell(fi, i, N);
+            if (!linked) return;
+            const lfc = faces[linked.face];
+            if (!lfc.gvn[linked.index] && !lfc.usr[linked.index]) {
+              lfc.usr[linked.index] = fc.puz[i];
+            }
+          });
         });
-      });
+      }
       return faces;
     }
 
@@ -1188,7 +1271,7 @@
       renderAll();
       updateFaceRots();
       updateActiveFaceUI();
-      mountFrontplate();
+      buildHitLayer();
     }
 
     async function enterInner() {
@@ -1196,9 +1279,8 @@
       const cubeEl2 = document.getElementById('cube');
       cubeEl2.style.transition = 'opacity 0.35s ease';
       cubeEl2.style.opacity = '0';
+      document.getElementById('hit-layer').style.display = 'none';
       await new Promise(r => setTimeout(r, 350));
-
-      unmountFrontplate();
 
       G.shell = 'inner'; G.f = 1; G.sel = null; lit = null;
       cubeM = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]; applyCube(false);
@@ -1210,7 +1292,7 @@
       fprog.innerHTML = '<div class="gen-loading">Generating inner shell…</div>';
       G.ifaces = mkFaces(G.N, await genCube(G.N), G.innerGivens);
       document.getElementById('hintbtn').disabled = false;
-      renderAll(); updateActiveFaceUI(); mountFrontplate();
+      renderAll(); updateActiveFaceUI(); buildHitLayer();
       cubeEl2.style.opacity = '1';
       setTimeout(() => { cubeEl2.style.transition = ''; }, 400);
     }
@@ -1223,9 +1305,11 @@
       for (let k = 0; k < N; k++) { if (k !== col && cv(f, row * N + k) === v) return false; if (k !== row && cv(f, k * N + col) === v) return false; }
       const r0 = ((row / br) | 0) * br, c0 = ((col / bc) | 0) * bc;
       for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) { const j = (r0 + dr) * N + (c0 + dc); if (j !== i && cv(f, j) === v) return false; }
-      // 3D edge constraint: the paired cell on the adjacent face must match (if filled)
-      const linked = getLinkedEdgeCell(f, i, N);
-      if (linked) { const other = cv(linked.face, linked.index); if (other && other !== v) return false; }
+      // 3D edge constraint: only for 4×4 (interconnected edges)
+      if (N === 4) {
+        const linked = getLinkedEdgeCell(f, i, N);
+        if (linked) { const other = cv(linked.face, linked.index); if (other && other !== v) return false; }
+      }
       return true;
     }
 
@@ -1287,27 +1371,7 @@
               if (sr === row || sc === col || sameBox) cell.classList.add('hl');
             }
           }
-          // Native DOM cell click interactions!
-          // Extracted reliably to the 2D frontplate avoiding rendering drops.
-          const idx = i, faceIdx = fi;
-          cell.addEventListener('click', () => {
-            if (busy || G.f !== faceIdx) return;
-            if (lit !== null) { G.sel = idx; enterNum(lit); return; }
-            G.sel = (G.sel === idx) ? null : idx;
-            renderFace(G.f, true);
-          });
-        }
-        // Edge-cell hover: highlight the counterpart on the adjacent face
-        const linked = getLinkedEdgeCell(fi, i, N);
-        if (linked) {
-          cell.addEventListener('mouseenter', () => {
-            const tfg = document.getElementById(`fg${linked.face}`);
-            if (tfg) tfg.children[linked.index]?.classList.add('edgehl');
-          });
-          cell.addEventListener('mouseleave', () => {
-            const tfg = document.getElementById(`fg${linked.face}`);
-            if (tfg) tfg.children[linked.index]?.classList.remove('edgehl');
-          });
+          // Click/hover interactions handled by #hit-layer (pure 2D overlay)
         }
         fg.appendChild(cell);
       }
@@ -1358,7 +1422,8 @@
       fc.usr[G.sel] = v;
       if (v) G.sel = null;
       // Auto-sync: mirror to paired edge cell on adjacent face (fill and erase)
-      if (autoSync) {
+      // Only for 4×4 (interconnected edges). 9×9 faces are independent.
+      if (autoSync && G.N === 4) {
         const linked = getLinkedEdgeCell(G.f, prevSel, G.N);
         if (linked) {
           const lfc = aFs()[linked.face];
@@ -1373,7 +1438,8 @@
 
     function swipeTo(dir) {
       if (busy) return;
-      unmountFrontplate();
+      // Hide hit-layer during rotation animation
+      document.getElementById('hit-layer').style.display = 'none';
 
       cubeM = snap3(mul3(ROT[dir], cubeM));
       G.f = facingFace(cubeM);
@@ -1391,7 +1457,7 @@
         if (done || tok !== swipeToken) return;
         done = true;
         renderAll(); updateFaceRots(); updateActiveFaceUI(); busy = false;
-        mountFrontplate();
+        buildHitLayer();
       }
       cubeEl.addEventListener('transitionend', onDone, { once: true });
       setTimeout(onDone, 600);
@@ -1468,8 +1534,8 @@
       const v = fc.sol[i];
       fc.usr[i] = v;
       G.sel = i;
-      // autoSync: mirror hint to linked edge cell on adjacent face
-      if (autoSync) {
+      // autoSync: mirror hint to linked edge cell on adjacent face (4×4 only)
+      if (autoSync && N === 4) {
         const linked = getLinkedEdgeCell(G.f, i, N);
         if (linked) { const lfc = aFs()[linked.face]; if (!lfc.gvn[linked.index]) lfc.usr[linked.index] = v; }
       }
