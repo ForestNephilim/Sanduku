@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Sanduku — 3D Sudoku</title>
   <meta name="description" content="Sanduku: A beautiful 3D Sudoku puzzle game with 6 interconnected faces, multiple difficulties, and dual-shell gameplay.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sanduku">
+  <meta name="theme-color" content="#0b0c10">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
@@ -318,7 +322,6 @@
     }
 
     .hbtn {
-      margin-left: auto;
       padding: 5px 12px;
       font-size: 12px;
       background: var(--sur);
@@ -514,19 +517,17 @@
 
     /* ═══ MINI 3D CUBE ═════════════════════════════════════════════ */
     .mini-cube-wrap {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      perspective: 200px;
-      width: 52px;
-      height: 52px;
-      z-index: 10;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
+      perspective: 140px;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      margin-left: auto;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,.5));
     }
 
     .mini-cube {
-      width: 52px;
-      height: 52px;
+      width: 36px;
+      height: 36px;
       transform-style: preserve-3d;
       transition: transform .45s cubic-bezier(.4,0,.2,1);
       position: relative;
@@ -534,25 +535,25 @@
 
     .mc-face {
       position: absolute;
-      width: 52px;
-      height: 52px;
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
       border: 1.5px solid rgba(255,255,255,.08);
       opacity: 0.85;
     }
 
     .mc-face.mc-active {
       border-color: var(--acc);
-      box-shadow: 0 0 12px rgba(139,92,246,0.5);
+      box-shadow: 0 0 8px rgba(139,92,246,0.5);
       opacity: 1;
     }
 
-    .mc-face:nth-child(1) { transform: rotateX(-90deg) translateZ(26px); }
-    .mc-face:nth-child(2) { transform: translateZ(26px); }
-    .mc-face:nth-child(3) { transform: rotateY(-90deg) translateZ(26px); }
-    .mc-face:nth-child(4) { transform: rotateY(180deg) translateZ(26px); }
-    .mc-face:nth-child(5) { transform: rotateY(90deg) translateZ(26px); }
-    .mc-face:nth-child(6) { transform: rotateX(90deg) translateZ(26px); }
+    .mc-face:nth-child(1) { transform: rotateX(-90deg) translateZ(18px); }
+    .mc-face:nth-child(2) { transform: translateZ(18px); }
+    .mc-face:nth-child(3) { transform: rotateY(-90deg) translateZ(18px); }
+    .mc-face:nth-child(4) { transform: rotateY(180deg) translateZ(18px); }
+    .mc-face:nth-child(5) { transform: rotateY(90deg) translateZ(18px); }
+    .mc-face:nth-child(6) { transform: rotateX(90deg) translateZ(18px); }
 
     /* ═══ SUDOKU GRID — always flat 2D ════════════════════════════ */
     .fg {
@@ -729,7 +730,114 @@
       flex: 1.4
     }
 
-    /* ═══ NAV ARROWS (swipe hint) ═════════════════════════════════ */
+    /* ═══ KO-FI BUTTON (menu footer) ═══════════════════════════════ */
+    .kofi-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 14px;
+      padding: 9px 18px;
+      background: var(--sur);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 100px;
+      color: var(--tx2);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      letter-spacing: .3px;
+    }
+    .kofi-btn:hover {
+      background: var(--sur2);
+      color: var(--tx);
+      border-color: rgba(255,255,255,0.14);
+      transform: translateY(-1px);
+    }
+    .kofi-btn span { font-size: 15px; }
+
+    /* ═══ KO-FI MODAL ═══════════════════════════════════════════════ */
+    .kofi-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .28s;
+    }
+    .kofi-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .kofi-modal {
+      background: rgba(22, 23, 34, 0.97);
+      border: 1.5px solid rgba(255,255,255,0.09);
+      border-radius: 26px;
+      padding: 30px 26px 24px;
+      width: min(340px, 92vw);
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      transform: translateY(12px) scale(0.97);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+    }
+    .kofi-overlay.show .kofi-modal {
+      transform: translateY(0) scale(1);
+    }
+    .km-icon { font-size: 42px; margin-bottom: 10px; }
+    .km-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -.4px;
+      margin-bottom: 8px;
+    }
+    .km-msg {
+      font-size: 13px;
+      color: var(--tx2);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    .km-btns { display: flex; gap: 10px; }
+    .km-later {
+      flex: 1;
+      padding: 13px;
+      background: var(--sur);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      color: var(--tx2);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .km-later:hover { background: var(--sur2); color: var(--tx); }
+    .km-support {
+      flex: 1.6;
+      padding: 13px;
+      background: linear-gradient(135deg, #ff5e5b, #ff9f43);
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 16px rgba(255,94,91,0.3);
+      transition: all .15s;
+    }
+    .km-support:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,94,91,0.4); }
     .nav-arrows {
       position: absolute;
       inset: 0;
@@ -816,6 +924,9 @@
       </div>
     </div>
     <button class="play-btn" id="playbtn">Play →</button>
+    <a class="kofi-btn" id="kofi-menu-btn" href="#" target="_blank" rel="noopener">
+      <span>☕</span> Support on Ko-fi
+    </a>
   </div>
 
   <!-- ══ GAME ══ -->
@@ -824,6 +935,9 @@
       <button class="back-btn" id="backbtn">←</button>
       <span class="gtitle">Sanduku</span>
       <span class="spip" id="spip">Outer shell</span>
+      <div class="mini-cube-wrap">
+        <div class="mini-cube" id="mini-cube"></div>
+      </div>
       <button class="hbtn" id="hintbtn">Hint</button>
     </div>
     <div class="fprog" id="fprog"></div>
@@ -843,10 +957,6 @@
           <div class="fg" id="active-grid"></div>
         </div>
 
-        <!-- Mini 3D cube -->
-        <div class="mini-cube-wrap">
-          <div class="mini-cube" id="mini-cube"></div>
-        </div>
       </div>
     </div>
     <div class="wb" id="wb"></div>
@@ -855,8 +965,51 @@
     </div>
   </div>
 
+  <!-- ══ KO-FI MODAL ══ -->
+  <div class="kofi-overlay" id="kofi-overlay">
+    <div class="kofi-modal">
+      <div class="km-icon">☕</div>
+      <div class="km-title">Enjoying Sanduku?</div>
+      <div class="km-msg">
+        This game is always free.<br>
+        If you're having fun, a coffee<br>helps keep new puzzles coming!
+      </div>
+      <div class="km-btns">
+        <button class="km-later" id="km-later-btn">Maybe later</button>
+        <a class="km-support" id="km-support-btn" href="#" target="_blank" rel="noopener">
+          ☕ Buy me a coffee
+        </a>
+      </div>
+    </div>
+  </div>
+
   <script>
     'use strict';
+
+    // ═══════════════════════════════════════════════════════════════
+    // KO-FI  — replace the URL with your own ko-fi page
+    // ═══════════════════════════════════════════════════════════════
+    const KOFI_URL = 'https://ko-fi.com/yourname'; // ← change this
+
+    let kofiShown = false; // only show modal once per session
+
+    function showKofiModal(reason) {
+      if (kofiShown) return;
+      kofiShown = true;
+      document.getElementById('kofi-overlay').classList.add('show');
+    }
+
+    function hideKofiModal() {
+      document.getElementById('kofi-overlay').classList.remove('show');
+    }
+
+    // Wire up ko-fi URLs
+    document.getElementById('kofi-menu-btn').href = KOFI_URL;
+    document.getElementById('km-support-btn').href = KOFI_URL;
+    document.getElementById('km-later-btn').addEventListener('click', hideKofiModal);
+    document.getElementById('kofi-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('kofi-overlay')) hideKofiModal();
+    });
 
     // ═══════════════════════════════════════════════════════════════
     // FACE NAVIGATION MAP
@@ -1361,6 +1514,8 @@
     }
 
     async function enterInner() {
+      if (busy) return;
+      busy = true;
       const card = document.getElementById('face-card');
       card.style.transition = 'opacity 0.35s ease';
       card.style.opacity = '0';
@@ -1379,6 +1534,7 @@
       fprog.innerHTML = '<div class="gen-loading">Generating inner shell…</div>';
       G.ifaces = mkFaces(G.N, await genCube(G.N), G.innerGivens);
       document.getElementById('hintbtn').disabled = false;
+      busy = false;
       renderAll();
       card.style.opacity = '1';
       setTimeout(() => { card.style.transition = ''; }, 400);
@@ -1406,10 +1562,13 @@
       const wb = document.getElementById('wb');
       if (G.shell === 'outer') {
         wb.innerHTML = 'Outer shell complete! <button onclick="enterInner()">Inner shell →</button>';
+        wb.style.display = 'block';
+        // Show ko-fi prompt after a moment — they've just had a win!
+        setTimeout(() => showKofiModal('outer_complete'), 1400);
       } else {
         wb.textContent = '🎉 Sanduku solved! Both shells complete!';
+        wb.style.display = 'block';
       }
-      wb.style.display = 'block';
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1681,6 +1840,111 @@
       });
       pc.appendChild(f);
     });
+
+    // ═══════════════════════════════════════════════════════════════
+    // APP ICON — generated via Canvas so no separate file is needed.
+    // iOS reads link[rel="apple-touch-icon"] from the DOM when the
+    // user taps "Add to Home Screen".
+    // ═══════════════════════════════════════════════════════════════
+    (function createAppIcon() {
+      try {
+        const S = 180;
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = S;
+        const c = cv.getContext('2d');
+
+        // Background gradient
+        const bg = c.createLinearGradient(0, 0, S, S);
+        bg.addColorStop(0, '#1c1d26');
+        bg.addColorStop(1, '#0b0c10');
+        c.fillStyle = bg;
+        c.fillRect(0, 0, S, S);
+
+        // Purple ambient glow
+        const pg = c.createRadialGradient(27, 90, 0, 27, 90, 110);
+        pg.addColorStop(0, 'rgba(139,92,246,0.22)');
+        pg.addColorStop(1, 'rgba(139,92,246,0)');
+        c.fillStyle = pg; c.fillRect(0, 0, S, S);
+
+        // Blue ambient glow
+        const bg2 = c.createRadialGradient(155, 52, 0, 155, 52, 100);
+        bg2.addColorStop(0, 'rgba(59,130,246,0.18)');
+        bg2.addColorStop(1, 'rgba(59,130,246,0)');
+        c.fillStyle = bg2; c.fillRect(0, 0, S, S);
+
+        // — Isometric cube —
+        // Vertex positions (cube half-width 42, projected)
+        // Top: TL(48,70) T(90,48) TR(132,70) | Middle: ML(48,112) MC(90,92) MR(132,112) | Bot: BC(90,134)
+        const poly = (pts, fill) => {
+          c.beginPath(); c.moveTo(pts[0], pts[1]);
+          for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i+1]);
+          c.closePath(); c.fillStyle = fill; c.fill();
+        };
+        const ln = (x1,y1,x2,y2, col, lw) => {
+          c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2);
+          c.strokeStyle = col; c.lineWidth = lw; c.stroke();
+        };
+        const num = (t,x,y,col) => {
+          c.font = '700 12px -apple-system,Helvetica,Arial,sans-serif';
+          c.fillStyle = col; c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.fillText(t, x, y);
+        };
+
+        // Top face
+        poly([48,70, 90,48, 132,70, 90,92], '#c4b5fd');
+        c.globalAlpha = 0.22;
+        ln(69,59, 111,81, '#000', 1.2); ln(69,81, 111,59, '#000', 1.2);
+        c.globalAlpha = 1;
+        num('4',69,70,'rgba(0,0,0,0.58)'); num('2',90,60,'rgba(0,0,0,0.58)');
+        num('1',90,82,'rgba(0,0,0,0.58)'); num('3',111,70,'rgba(0,0,0,0.58)');
+
+        // Left face
+        poly([48,70, 90,92, 90,134, 48,112], '#6d28d9');
+        c.globalAlpha = 0.22;
+        ln(69,81, 69,123, '#fff', 1.2); ln(48,91, 90,113, '#fff', 1.2);
+        c.globalAlpha = 1;
+        num('1',59,87,'rgba(255,255,255,0.78)'); num('3',80,98,'rgba(255,255,255,0.78)');
+        num('4',59,109,'rgba(255,255,255,0.78)'); num('2',80,120,'rgba(255,255,255,0.78)');
+
+        // Right face
+        poly([90,92, 132,70, 132,112, 90,134], '#3730a3');
+        c.globalAlpha = 0.15;
+        ln(111,81, 111,123, '#fff', 1.2); ln(90,113, 132,91, '#fff', 1.2);
+        c.globalAlpha = 1;
+        num('3',101,99,'rgba(255,255,255,0.58)'); num('1',122,88,'rgba(255,255,255,0.58)');
+        num('2',101,120,'rgba(255,255,255,0.58)'); num('4',122,110,'rgba(255,255,255,0.58)');
+
+        // Edge highlights (outer rim of visible cube)
+        c.beginPath();
+        c.moveTo(48,112); c.lineTo(48,70); c.lineTo(90,48);
+        c.lineTo(132,70); c.lineTo(132,112);
+        c.strokeStyle = 'rgba(255,255,255,0.38)'; c.lineWidth = 1.8;
+        c.lineJoin = 'round'; c.stroke();
+        ln(48,70,90,92,'rgba(255,255,255,0.22)',1.2);
+        ln(90,92,132,70,'rgba(255,255,255,0.16)',1.2);
+        ln(90,92,90,134,'rgba(255,255,255,0.14)',1.2);
+        c.beginPath();
+        c.moveTo(48,112); c.lineTo(90,134); c.lineTo(132,112);
+        c.strokeStyle = 'rgba(0,0,0,0.4)'; c.lineWidth = 1.2; c.stroke();
+
+        // "SANDUKU" wordmark
+        c.font = '900 15px -apple-system,Helvetica,Arial,sans-serif';
+        c.fillStyle = '#a78bfa'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText('SANDUKU', 90, 163);
+
+        const dataURL = cv.toDataURL('image/png');
+
+        // Apply as apple-touch-icon
+        const atl = document.createElement('link');
+        atl.rel = 'apple-touch-icon'; atl.href = dataURL;
+        document.head.appendChild(atl);
+
+        // Also apply as regular favicon
+        const fl = document.createElement('link');
+        fl.rel = 'icon'; fl.type = 'image/png'; fl.href = dataURL;
+        document.head.appendChild(fl);
+      } catch(e) {}
+    })();
   </script>
 </body>
 
